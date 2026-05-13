@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Game: Golf Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bet-card { background: #1e293b; border-left: 4px solid #3b82f6; }
+        .press-btn { background: #ef4444; }
+        .turkey-active { animation: pulse 2s infinite; color: #fbbf24; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
+</head>
+<body class="bg-slate-900 text-white font-sans p-4">
+
+    <header class="mb-6">
+        <h1 class="text-2xl font-bold text-center border-b border-slate-700 pb-2">THE GAME</h1>
+        <div class="flex justify-between mt-4 text-lg font-mono">
+            <div class="text-blue-400">TEAM A: <span id="teamA_total">$0</span></div>
+            <div class="text-red-400">TEAM B: <span id="teamB_total">$0</span></div>
+        </div>
+    </header>
+
+    <section id="bets" class="space-y-3 mb-8">
+        <div class="bet-card p-3 rounded shadow">
+            <div class="flex justify-between">
+                <span>Original Nassau (18)</span>
+                <span id="nassau_status">All Square</span>
+            </div>
+        </div>
+        <button onclick="addPress()" class="w-full press-btn py-2 rounded font-bold uppercase text-sm">Add Press</button>
+    </section>
+
+    <section>
+        <h2 class="text-xs uppercase text-slate-500 mb-2 tracking-widest">Scorecard</h2>
+        <div class="grid grid-cols-6 gap-2" id="scorecard_grid">
+            </div>
+    </section>
+
+    <footer class="mt-12 border-t border-slate-700 pt-4 pb-10">
+        <button onclick="exportSummary()" class="w-full bg-slate-700 py-3 rounded text-slate-300">View Final Damage</button>
+    </footer>
+
+    <script>
+        // DATA & STATE
+        let teamA_trash = 0;
+        let teamB_trash = 0;
+        let presses = [];
+        let turkeyStreakA = 0;
+        let turkeyStreakB = 0;
+
+        // LOAD RULES (Baked in for Alpha)
+        const rules = {
+            nassau: 3.00,
+            turkey: 5.00,
+            moose: { birdie: 5, par: 2, bogey: 1 }
+        };
+
+        function init() {
+            const grid = document.getElementById('scorecard_grid');
+            for(let i=1; i<=18; i++) {
+                grid.innerHTML += `<button onclick="openHole(${i})" class="bg-slate-800 p-4 rounded text-center border border-slate-700">${i}</button>`;
+            }
+        }
+
+        function addPress() {
+            const h = prompt("Starting on which hole?");
+            if(h) {
+                presses.push({ start: h, status: 'AS' });
+                alert("Press Added starting on Hole " + h);
+            }
+        }
+
+        function openHole(n) {
+            // This is where the scoring logic we built goes.
+            // For Alpha, we trigger a simple prompt to simulate the win.
+            const win = prompt("Hole " + n + " winner? (A/B/H)");
+            if(win === 'A') teamA_trash += 1; // Simplified for Demo
+            document.getElementById('teamA_total').innerText = "$" + teamA_trash;
+        }
+
+        init();
+    </script>
+</body>
+</html>
