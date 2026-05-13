@@ -1,0 +1,12 @@
+{
+  "bets": { "nassau_base": 3.00, "press_value": 3.00 },
+  "trash": {
+    "sandy": 1.00, "greenie": 1.00, "birdie": 1.00, "eagle": 10.00,
+    "jones_single_e": 3.00, "jones_double_e": 5.00, "double_doug": 8.00,
+    "reversie": 1.00, "osborne": 5.00, "turkey": 5.00,
+    "jackpot": 2.00, "jackpot_jeff": 5.00, "jackpot_phil": 10.00,
+    "honey_badger": 40.00, "joz_kicker": 30.00, "hole_in_one": 100.00,
+    "moose_knuckle_birdie": 5.00, "moose_knuckle_par": 2.00, "moose_knuckle_bogey": 1.00
+  },
+  "players": ["The Wolf", "The Shark", "The Raccoon", "The Pig", "The Hyena", "The Woodpecker"]
+}
