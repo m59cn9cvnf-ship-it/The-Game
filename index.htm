@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: Pro Ledger</title>
+    <title>THE GAME: Trash Log</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
@@ -17,6 +17,7 @@
         .press-single { border-left: 5px solid #10b981 !important; }
         .press-double { border-left: 10px double #10b981 !important; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
+        .log-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #334155; font-size: 0.75rem; }
     </style>
 </head>
 <body class="p-2">
@@ -25,7 +26,7 @@
         <header class="flex justify-between items-center mb-4 px-2">
             <h1 class="text-xl font-black italic text-emerald-400">THE GAME</h1>
             <div class="flex gap-2">
-                <button onclick="clearAllData()" class="text-[9px] bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-900/50 uppercase">Reset</button>
+                <button onclick="clearAllData()" class="text-[9px] bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-900/50 uppercase font-bold">Reset</button>
                 <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-[10px] bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 uppercase font-bold text-emerald-400">Setup</button>
             </div>
         </header>
@@ -61,10 +62,12 @@
         <div class="card bg-slate-900 border-emerald-500/30 sticky bottom-2 shadow-2xl overflow-hidden">
             <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
                 <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Live Betting Ledger</div>
-                <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-3 py-1 rounded text-[9px] font-black uppercase">Add Press</button>
-            </div>
-            <div id="match-list" class="space-y-1 mb-3">
+                <div class="flex gap-2">
+                    <button onclick="document.getElementById('log-modal').style.display='flex'" class="bg-slate-800 px-3 py-1 rounded text-[9px] font-bold uppercase border border-slate-700">Trash Log</button>
+                    <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-3 py-1 rounded text-[9px] font-black uppercase">Add Press</button>
                 </div>
+            </div>
+            <div id="match-list" class="space-y-1 mb-3"></div>
             <div id="trash-summary" class="grid grid-cols-2 gap-2 text-[11px] font-mono border-t border-slate-800 pt-2">
                 <div id="t1-trash" class="text-emerald-400">T1 Trash: $0</div>
                 <div id="t2-trash" class="text-amber-400 text-right">T2 Trash: $0</div>
@@ -80,6 +83,15 @@
             </div>
             <div class="space-y-4" id="modal-inputs"></div>
             <button onclick="closeModal()" class="w-full mt-6 bg-emerald-600 py-4 rounded-xl font-bold uppercase">Save Hole</button>
+        </div>
+    </div>
+
+    <div id="log-modal" class="modal">
+        <div class="bg-slate-900 p-6 rounded-2xl w-full max-w-sm border border-slate-700 max-h-[80vh] flex flex-col">
+            <h2 class="text-center font-black text-emerald-500 uppercase mb-4 tracking-tighter">Trash History</h2>
+            <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2">
+                </div>
+            <button onclick="document.getElementById('log-modal').style.display='none'" class="w-full bg-slate-700 py-3 rounded-xl font-bold uppercase text-xs">Close Log</button>
         </div>
     </div>
 
@@ -184,73 +196,77 @@
 
         function calculateEverything() {
             let t1_t = 0, t2_t = 0;
-            let streaks = [0,0,0,0]; // Turkey tracker
+            let logHtml = '';
+            let streaks = [0,0,0,0];
 
-            // 1. Calculate Matches (Original + Presses)
-            let matchHistory = [{ start: 1, name: 'Original' }];
-            Object.keys(presses).forEach(h => matchHistory.push({ start: parseInt(h), name: `Press H${h}` }));
+            function addToLog(hole, player, type, amt, tIdx) {
+                let teamName = tIdx < 2 ? roster.t1 : roster.t2;
+                logHtml = `<div class="log-row"><span>H${hole} - ${player} (${type})</span><span class="${tIdx < 2 ? 'text-emerald-400':'text-amber-400'}">+$${amt}</span></div>` + logHtml;
+                tIdx < 2 ? t1_t += amt : t2_t += amt;
+            }
 
-            const matchStatus = matchHistory.map(m => {
-                let diff = 0;
-                for(let h=m.start; h<=18; h++) {
-                    let nets = [];
-                    let ready = true;
-                    for(let i=0; i<4; i++) {
-                        let g = scores[`${i}_${h}`];
-                        if(g === '' || g === undefined) { ready = false; break; }
-                        nets[i] = g - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
-                    }
-                    if(ready) {
-                        let t1Best = Math.min(nets[0], nets[1]);
-                        let t2Best = Math.min(nets[2], nets[3]);
-                        if(t1Best < t2Best) diff++;
-                        else if(t2Best < t1Best) diff--;
-                    }
-                }
-                return { name: m.name, diff: diff };
-            });
-
-            // 2. Trash Calculation (Turkey & Jackpots)
             for(let h=1; h<=18; h++) {
-                if(mk_results[h] === '1') t1_t += 5;
-                if(mk_results[h] === '2') t1_t += 2;
-                if(mk_results[h] === '3') t2_t += 1;
+                if(mk_results[h]) {
+                    if(mk_results[h] === '1') addToLog(h, "Team A", "Moose Birdie", 5, 0);
+                    if(mk_results[h] === '2') addToLog(h, "Team A", "Moose Par", 2, 0);
+                    if(mk_results[h] === '3') addToLog(h, "Team B", "Moose Challenger", 1, 2);
+                }
 
                 for(let i=0; i<4; i++) {
                     let g = scores[`${i}_${h}`];
                     if(!g) { streaks[i] = 0; continue; }
                     let par = course.pars[h-1];
-                    
-                    // Turkey Logic (3 consecutive birdies, MK doesn't count)
-                    if(g === par - 1 && !mk_results[h]) {
-                        streaks[i]++;
-                        if(streaks[i] === 3) {
-                            alert(`${roster.players[i].name} TURKEY! +$5`);
-                            i < 2 ? t1_t += 5 : t2_t += 5;
-                            streaks[i] = 0; // Reset after payout
-                        }
-                    } else {
-                        streaks[i] = 0;
-                    }
 
-                    // Jackpot Logic
-                    if(g === par - 1) i < 2 ? t1_t += 2 : t2_t += 2; // Birdie = $2 Jackpot
-                    if(g <= par - 2) { // Eagle+ = $10 Jackpot Phil
-                        alert(`${roster.players[i].name} JACKPOT PHIL! +$10`);
-                        i < 2 ? t1_t += 10 : t2_t += 10;
-                    }
-                    if(g === 1) i < 2 ? t1_t += 100 : t2_t += 100; // Hole in one
+                    // Birdie Check (GROSS ONLY)
+                    if(g === par - 1) {
+                        addToLog(h, roster.players[i].name, "Birdie", 2, i);
+                        if(!mk_results[h]) { // Turkey streak only on non-MK birdies
+                            streaks[i]++;
+                            if(streaks[i] === 3) {
+                                addToLog(h, roster.players[i].name, "TURKEY!", 5, i);
+                                streaks[i] = 0;
+                            }
+                        } else { streaks[i] = 0; }
+                    } else { streaks[i] = 0; }
+
+                    // Eagle+ Check
+                    if(g <= par - 2) addToLog(h, roster.players[i].name, "Eagle/Jackpot Phil", 10, i);
+                    if(g === 1) addToLog(h, roster.players[i].name, "HOLE IN ONE!", 100, i);
                 }
             }
-            updateLedger(matchStatus, t1_t, t2_t);
+            
+            document.getElementById('log-content').innerHTML = logHtml || '<div class="text-center text-slate-600 text-xs mt-10">No trash recorded yet.</div>';
+            
+            // Re-calculate Matches
+            let matchHistory = [{ start: 1, name: 'Original' }];
+            Object.keys(presses).forEach(h => matchHistory.push({ start: parseInt(h), name: `Press H${h}` }));
+            const mStatus = matchHistory.map(m => {
+                let diff = 0;
+                for(let h=m.start; h<=18; h++) {
+                    let ready = true, nets = [];
+                    for(let i=0; i<4; i++) {
+                        let gs = scores[`${i}_${h}`];
+                        if(gs === '' || gs === undefined) { ready = false; break; }
+                        nets[i] = gs - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
+                    }
+                    if(ready) {
+                        let t1Best = Math.min(nets[0], nets[1]);
+                        let t2Best = Math.min(nets[2], nets[3]);
+                        if(t1Best < t2Best) diff++; else if(t2Best < t1Best) diff--;
+                    }
+                }
+                return { name: m.name, diff: diff };
+            });
+
+            updateLedger(mStatus, t1_t, t2_t);
         }
 
         function updateLedger(matches, t1, t2) {
             const mList = document.getElementById('match-list');
             mList.innerHTML = '';
             matches.forEach(m => {
-                let status = m.diff === 0 ? "AS" : (m.diff > 0 ? `${roster.t1} +${m.diff}` : `${roster.t2} +${Math.abs(m.diff)}`);
-                mList.innerHTML += `<div class="flex justify-between text-xs font-bold"><span>${m.name}</span><span class="text-emerald-400">${status}</span></div>`;
+                let s = m.diff === 0 ? "AS" : (m.diff > 0 ? `${roster.t1} +${m.diff}` : `${roster.t2} +${Math.abs(m.diff)}`);
+                mList.innerHTML += `<div class="flex justify-between text-xs font-bold"><span>${m.name}</span><span class="text-emerald-400">${s}</span></div>`;
             });
             document.getElementById('t1-trash').innerText = `${roster.t1} Trash: $${t1}`;
             document.getElementById('t2-trash').innerText = `${roster.t2} Trash: $${t2}`;
