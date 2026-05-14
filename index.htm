@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: Jeff & Phil</title>
+    <title>THE GAME: Double Doug</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
@@ -25,9 +25,9 @@
     <div id="app" class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-4 px-2">
             <h1 class="text-xl font-black italic text-emerald-400">THE GAME</h1>
-            <div class="flex gap-2 text-[10px]">
-                <button onclick="clearAllData()" class="bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-900/50 uppercase font-bold">Reset</button>
-                <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 uppercase font-bold text-emerald-400">Setup</button>
+            <div class="flex gap-2">
+                <button onclick="clearAllData()" class="text-[9px] bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-900/50 uppercase font-bold">Reset</button>
+                <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-[10px] bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 uppercase font-bold text-emerald-400">Setup</button>
             </div>
         </header>
 
@@ -117,7 +117,7 @@
             for(let i=0; i<4; i++) {
                 const target = i < 2 ? t1Div : t2Div;
                 target.innerHTML += `
-                <input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="Player ${i+1}" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700 mb-1">
+                <input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="P${i+1}" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700 mb-1">
                 <input type="number" id="p-i-${i}" value="${roster.players?.[i]?.idx || ''}" placeholder="Idx" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700 mb-2">`;
             }
             if(roster.players?.length > 0) buildTable();
@@ -194,89 +194,75 @@
         }
 
         function calculateEverything() {
-            let t1_t = 0, t2_t = 0;
-            let logHtml = '';
-            let streaks = [0,0,0,0];
-            let currentJackpotPool = 0;
+            let t1_t = 0, t2_t = 0, logHtml = '';
+            let streaks = [0,0,0,0], jackpotPool = 0;
 
-            function addToLog(hole, player, type, amt, tIdx) {
-                logHtml = `<div class="log-row"><span>H${hole} - ${player} (${type})</span><span class="${tIdx < 2 ? 'text-emerald-400':'text-amber-400'}">+$${amt}</span></div>` + logHtml;
+            function log(hole, label, amt, tIdx) {
+                logHtml = `<div class="log-row"><span>H${hole} - ${label}</span><span class="${tIdx < 2 ? 'text-emerald-400':'text-amber-400'}">+$${amt}</span></div>` + logHtml;
                 tIdx < 2 ? t1_t += amt : t2_t += amt;
             }
 
             for(let h=1; h<=18; h++) {
-                let ready = true, nets = [], gScores = [];
-                let hPar = course.pars[h-1];
+                let ready = true, gS = [], nS = [];
+                let par = course.pars[h-1];
 
                 for(let i=0; i<4; i++) {
                     let g = scores[`${i}_${h}`];
                     if(g === '' || g === undefined) { ready = false; break; }
-                    gScores[i] = g;
-                    nets[i] = g - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
+                    gS[i] = g;
+                    nS[i] = g - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
                 }
 
-                // 1. Moose Knuckle
                 if(mk_results[h]) {
-                    if(mk_results[h] === '1') addToLog(h, roster.t1, "Moose Birdie", 5, 0);
-                    if(mk_results[h] === '2') addToLog(h, roster.t1, "Moose Par", 2, 0);
-                    if(mk_results[h] === '3') addToLog(h, roster.t2, "Moose Challenger", 1, 2);
+                    if(mk_results[h] === '1') log(h, "Moose Birdie", 5, 0);
+                    if(mk_results[h] === '2') log(h, "Moose Par", 2, 0);
+                    if(mk_results[h] === '3') log(h, "Moose Challenger", 1, 2);
                 }
 
-                // 2. Trash (Double Doug / Phil / Turkey)
+                // Individual and Team Trash
+                let isHoleNaturalBirdie = [false, false, false, false];
                 for(let i=0; i<4; i++) {
-                    let g = gScores[i];
-                    if(!g) { streaks[i] = 0; continue; }
-
-                    if(g <= hPar - 2 && g > 1) {
-                        if(hPar === 5) addToLog(h, roster.players[i].name, "DOUBLE DOUG", 8, i);
-                        else addToLog(h, roster.players[i].name, "JACKPOT PHIL", 10, i);
-                    }
-                    if(g === 1) addToLog(h, roster.players[i].name, "HOLE IN ONE!", 100, i);
-
-                    if(g === hPar - 1 && !mk_results[h]) {
+                    let g = gS[i]; if(!g) { streaks[i] = 0; continue; }
+                    
+                    // Natural Birdie Tracking
+                    if(g === par - 1 && !mk_results[h]) {
+                        isHoleNaturalBirdie[i] = true;
                         streaks[i]++;
-                        if(streaks[i] === 3) { addToLog(h, roster.players[i].name, "TURKEY!", 5, i); streaks[i] = 0; }
-                    } else streaks[i] = 0;
+                        if(streaks[i] === 3) { log(h, `${roster.players[i].name} TURKEY!`, 5, i); streaks[i] = 0; }
+                    } else { streaks[i] = 0; }
+
+                    // Eagle Check
+                    if(g <= par - 2 && g > 1) log(h, `${roster.players[i].name} EAGLE`, 10, i);
+                    if(g === 1) log(h, `${roster.players[i].name} ACE!`, 100, i);
                 }
 
-                // 3. SPECIAL JACKPOTS (Jeff / Phil / Same)
+                // DOUBLE DOUG: Both players on a team get a natural birdie
+                if(isHoleNaturalBirdie[0] && isHoleNaturalBirdie[1]) log(h, `TEAM ${roster.t1} DOUBLE DOUG`, 8, 0);
+                if(isHoleNaturalBirdie[2] && isHoleNaturalBirdie[3]) log(h, `TEAM ${roster.t2} DOUBLE DOUG`, 8, 2);
+
+                // GROUP JACKPOTS
                 if(ready) {
-                    let bogey = hPar + 1;
-                    let double = hPar + 2;
-                    let allSame = gScores.every(v => v === gScores[0]);
-                    let allOverBogey = gScores.every(v => v > bogey);
-                    let allDoublePlus = gScores.every(v => v >= double);
+                    let hPool = 0;
+                    let allSame = gS.every(v => v === gS[0]);
+                    let allBogeyPlus = gS.every(v => v >= par + 1);
+                    let allDoublePlus = gS.every(v => v >= par + 2);
 
-                    if(allDoublePlus) {
-                        currentJackpotPool += 10;
-                        addToLog(h, "GROUP", "JACKPOT PHIL (+10)", 0, 0); 
-                    } else if(allOverBogey) {
-                        currentJackpotPool += 5;
-                        addToLog(h, "GROUP", "JACKPOT JEFF (+5)", 0, 0);
-                    } else if(allSame) {
-                        currentJackpotPool += 2;
-                        addToLog(h, "GROUP", "JACKPOT (+2)", 0, 0);
-                    }
-
-                    let t1Net = Math.min(nets[0], nets[1]);
-                    let t2Net = Math.min(nets[2], nets[3]);
+                    if (allSame) hPool += 2; 
+                    if (allDoublePlus) hPool += 10; 
+                    else if (allBogeyPlus) hPool += 5; 
                     
-                    if(t1Net < t2Net && currentJackpotPool > 0) {
-                        addToLog(h, roster.t1, "JACKPOT WIN", currentJackpotPool, 0);
-                        currentJackpotPool = 0;
-                    } else if(t2Net < t1Net && currentJackpotPool > 0) {
-                        addToLog(h, roster.t2, "JACKPOT WIN", currentJackpotPool, 2);
-                        currentJackpotPool = 0;
-                    }
+                    jackpotPool += hPool;
+                    let t1N = Math.min(nS[0], nS[1]), t2N = Math.min(nS[2], nS[3]);
+                    if(t1N < t2N && jackpotPool > 0) { log(h, `${roster.t1} WIN JACKPOT`, jackpotPool, 0); jackpotPool = 0; }
+                    else if(t2N < t1N && jackpotPool > 0) { log(h, `${roster.t2} WIN JACKPOT`, jackpotPool, 2); jackpotPool = 0; }
                 }
             }
-            
-            document.getElementById('log-content').innerHTML = logHtml || '<div class="text-center text-slate-600 text-xs mt-10">No trash recorded.</div>';
+            document.getElementById('log-content').innerHTML = logHtml || '<div class="text-center text-slate-600 text-xs mt-10">No trash yet.</div>';
             
             let matchHistory = [{ start: 1, name: 'Original' }];
             Object.keys(presses).forEach(h => matchHistory.push({ start: parseInt(h), name: `Press H${h}` }));
-            const mStatus = matchHistory.map(m => {
-                let diff = 0;
+            const mStat = matchHistory.map(m => {
+                let d = 0;
                 for(let h=m.start; h<=18; h++) {
                     let r = true, ns = [];
                     for(let i=0; i<4; i++) {
@@ -285,18 +271,17 @@
                         ns[i] = gs - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
                     }
                     if(r) {
-                        let t1B = Math.min(ns[0], ns[1]), t2B = Math.min(ns[2], ns[3]);
-                        if(t1B < t2B) diff++; else if (t2B < t1B) diff--;
+                        let aB = Math.min(ns[0], ns[1]), bB = Math.min(ns[2], ns[3]);
+                        if(aB < bB) d++; else if(bB < aB) d--;
                     }
                 }
-                return { name: m.name, diff: diff };
+                return { name: m.name, diff: d };
             });
-            updateLedger(mStatus, t1_t, t2_t);
+            updateLedger(mStat, t1_t, t2_t);
         }
 
         function updateLedger(matches, t1, t2) {
-            const mList = document.getElementById('match-list');
-            mList.innerHTML = '';
+            const mList = document.getElementById('match-list'); mList.innerHTML = '';
             matches.forEach(m => {
                 let s = m.diff === 0 ? "AS" : (m.diff > 0 ? `${roster.t1} +${m.diff}` : `${roster.t2} +${Math.abs(m.diff)}`);
                 mList.innerHTML += `<div class="flex justify-between text-xs font-bold"><span>${m.name}</span><span class="text-emerald-400">${s}</span></div>`;
