@@ -3,81 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE GAME v2.0</title>
+    <title>THE GAME: Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .bg-golf-dark { background: #0f172a; }
-        .accent-border { border-left: 4px solid #10b981; }
-        .dot { height: 8px; width: 8px; background-color: #fbbf24; border-radius: 50%; display: inline-block; margin-left: 2px; }
-    </style>
-</head>
-<body class="bg-golf-dark text-slate-100 font-sans min-h-screen p-4">
-    <script>
-        const supabaseUrl = 'https://juplwsfiqlwegiznhxgm.supabase.co';
-        const supabaseKey = 'sb_publishable_gg2_oR09BOYwnYHDgdRXug_LiRwKNyp';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        .golf-card { background: #1e293b; border-bottom: 2px solid #334155; }
+        .dot { height: 6px; width: 6px; background: #fbbf24; border-radius: 50%; display: inline-block; margin: 1px; }
+        .active-player { border: 2px solid #10b981; background: #064e3b !important; }
     </script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen p-4 pb-20">
+
     <div id="app" class="max-w-md mx-auto">
-        <header class="flex justify-between items-center border-b border-slate-700 pb-4 mb-6">
-            <h1 class="text-2xl font-black tracking-tighter text-emerald-500">THE GAME</h1>
-            <nav class="flex gap-4 text-xs font-bold uppercase tracking-widest text-slate-400">
-                <button onclick="showTab('round')">Play</button>
-                <button onclick="showTab('stats')">Leaderboard</button>
-                <button onclick="showTab('course')">Courses</button>
-            </nav>
+        <header class="mb-6 flex justify-between items-center">
+            <h1 class="text-2xl font-black text-emerald-500">THE GAME</h1>
+            <button onclick="toggleSetup()" class="bg-slate-700 px-3 py-1 rounded text-xs uppercase">Round Setup</button>
         </header>
 
-        <div id="tab-round" class="tab-content">
-            <div class="bg-slate-800 p-4 rounded-xl shadow-2xl mb-6 accent-border">
-                <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">Live Nassau</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="text-emerald-400 text-sm">TEAM A: <span id="disp-teamA" class="text-xl block font-mono">$0</span></div>
-                    <div class="text-emerald-400 text-sm">TEAM B: <span id="disp-teamB" class="text-xl block font-mono">$0</span></div>
+        <section id="setup-panel" class="hidden bg-slate-800 p-4 rounded-xl mb-6 shadow-2xl">
+            <h2 class="text-sm font-bold text-slate-400 mb-4 uppercase">Select 4 Players & Verify Index</h2>
+            <div id="player-list" class="grid grid-cols-2 gap-2 mb-4">
                 </div>
+            <button onclick="startRound()" class="w-full bg-emerald-600 py-3 rounded-lg font-bold">Lock In Round</button>
+        </section>
+
+        <main id="round-panel">
+            <div id="hole-grid" class="grid grid-cols-6 gap-2 mb-8">
+                </div>
+
+            <div class="bg-slate-800 p-4 rounded-xl">
+                <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">Live Stakes</h3>
+                <div id="live-ledger" class="space-y-1 font-mono text-sm">
+                    </div>
             </div>
-            <div id="scorecard-grid" class="grid grid-cols-6 gap-2"></div>
-        </div>
-
-        <div id="tab-stats" class="tab-content hidden">
-            <h2 class="text-xl font-bold mb-4 text-emerald-500">Year-to-Date Earnings</h2>
-            <div id="leaderboard-list" class="space-y-2"></div>
-        </div>
-
-        <div id="tab-course" class="tab-content hidden">
-            <button onclick="addCourse()" class="w-full bg-emerald-600 py-3 rounded-lg font-bold mb-4">Add New Course</button>
-            <div id="course-list" class="space-y-2 text-sm text-slate-400 italic">No courses added yet.</div>
-        </div>
+        </main>
     </div>
+
     <script>
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
+        const players = [
+            { name: "The Wolf", index: 10.4 }, { name: "The Shark", index: 8.2 },
+            { name: "The Raccoon", index: 15.1 }, { name: "The Pig", index: 12.5 },
+            { name: "The Hyena", index: 11.0 }, { name: "The Woodpecker", index: 14.2 }
+        ];
+
+        let selectedPlayers = [];
+        let scores = {}; // Stores { hole: { player: score } }
+
+        function init() {
+            const list = document.getElementById('player-list');
+            players.forEach(p => {
+                list.innerHTML += `
+                    <div id="btn-${p.name.replace(' ', '')}" onclick="togglePlayer('${p.name}')" class="bg-slate-700 p-3 rounded-lg cursor-pointer text-center">
+                        <div class="text-xs font-bold">${p.name}</div>
+                        <div class="text-[10px] text-slate-400">Idx: ${p.index}</div>
+                    </div>`;
+            });
+            renderHoles();
         }
 
-        function calculateCourseHandicap(index, slope, rating, par) {
-            return Math.round((index * (slope / 113)) + (rating - par));
+        function togglePlayer(name) {
+            const idx = selectedPlayers.indexOf(name);
+            if (idx > -1) selectedPlayers.splice(idx, 1);
+            else if (selectedPlayers.length < 4) selectedPlayers.push(name);
+            
+            // UI Toggle
+            document.querySelectorAll('#player-list div').forEach(el => el.classList.remove('active-player'));
+            selectedPlayers.forEach(p => document.getElementById(`btn-${p.replace(' ', '')}`).classList.add('active-player'));
         }
 
-        async function init() {
-            const grid = document.getElementById('scorecard-grid');
+        function renderHoles() {
+            const grid = document.getElementById('hole-grid');
             for(let i=1; i<=18; i++) {
-                grid.innerHTML += `<button class="bg-slate-800 p-4 rounded-lg border border-slate-700 font-bold hover:bg-slate-700" onclick="scoreHole(${i})">${i}</button>`;
+                grid.innerHTML += `<button onclick="scoreHole(${i})" class="bg-slate-800 h-16 rounded border border-slate-700 font-bold">${i}</button>`;
             }
         }
 
-        function scoreHole(holeNum) {
-            const mk = confirm("Was a MOOSE KNUCKLE called on this hole?");
-            if (mk) {
-                const result = prompt("Who won the MK? (A = Putting Team / B = Challenger / X = Cancel)");
-                if(result === 'A') {
-                    const outcome = prompt("Did they Birdie or Par? (B/P)");
-                    alert(outcome === 'B' ? "Team A wins $5" : "Team A wins $2");
-                } else if(result === 'B') {
-                    alert("Team B wins $1");
+        function scoreHole(n) {
+            if (selectedPlayers.length < 4) return alert("Select 4 players in Setup first!");
+            
+            // Logic for Moose Knuckle on Par 3s
+            // (Assuming Par 3s are 3, 6, 12, 16 for this demo)
+            const par3s = [3, 6, 12, 16];
+            if (par3s.includes(n)) {
+                if(confirm("Hole " + n + ": Moose Knuckle Called?")) {
+                    const mk = prompt("1:Birdie(+5), 2:Par(+2), 3:Bogey(+1 to Opp)");
+                    // Logic to award money...
                 }
             }
+
+            // Individual Score Entry
+            selectedPlayers.forEach(p => {
+                const s = prompt(`Enter Gross Score for ${p} on Hole ${n}:`);
+                if (!scores[n]) scores[n] = {};
+                scores[n][p] = parseInt(s);
+            });
         }
+
+        function toggleSetup() { document.getElementById('setup-panel').classList.toggle('hidden'); }
+
         init();
     </script>
 </body>
