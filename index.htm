@@ -1,106 +1,153 @@
-<script>
-    const course = {
-        name: "Logan River", rating: 70.1, slope: 121, par: 71,
-        pars: [4,4,3,4,4,3,4,4,4,4,4,3,4,4,3,4,5,4],
-        hcp: [1, 13, 11, 7, 3, 15, 17, 5, 9, 2, 12, 16, 10, 4, 18, 14, 6, 8]
-    };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>THE GAME</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; }
+        .card { background: #1e293b; border-radius: 12px; padding: 16px; border-bottom: 3px solid #334155; }
+        .dot { height: 5px; width: 5px; background: #fbbf24; border-radius: 50%; margin: 1px; }
+        .score-entered { background-color: #064e3b !important; border-color: #10b981 !important; }
+    </style>
+</head>
+<body class="p-4">
 
-    let roster = [];
-    let totals = { a: 0, b: 0, nassau: 0 }; 
-    let holeResults = {}; // Stores { hole: { p0: gross, p0_net: net ... } }
+    <div id="app" class="max-w-md mx-auto">
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-black italic tracking-tighter text-emerald-400">THE GAME</h1>
+            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-xs bg-slate-800 px-3 py-2 rounded-full border border-slate-700 uppercase font-bold">Setup</button>
+        </header>
 
-    function init() {
-        const gDiv = document.getElementById('grid');
-        for(let i=1; i<=18; i++) {
-            const isP3 = course.pars[i-1] === 3;
-            gDiv.innerHTML += `
-                <button id="hole-${i}" onclick="scoreHole(${i}, ${isP3})" class="bg-slate-800 h-16 rounded-lg border border-slate-700 flex flex-col items-center justify-center relative">
-                    <span class="text-[10px] text-slate-500">${i}</span>
-                    <div id="dots-${i}" class="flex gap-0.5 mt-1"></div>
-                    ${isP3 ? '<div class="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>' : ''}
-                </button>`;
-        }
-    }
+        <section id="setup" class="card mb-6">
+            <h2 class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Setup Players & Indexes</h2>
+            <div class="space-y-2 mb-4">
+                <div class="flex gap-2"><input type="text" id="p0-n" placeholder="P1 Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm text-white"><input type="number" id="p0-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm text-white"></div>
+                <div class="flex gap-2"><input type="text" id="p1-n" placeholder="P2 Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm text-white"><input type="number" id="p1-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm text-white"></div>
+                <div class="flex gap-2"><input type="text" id="p2-n" placeholder="P3 Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm text-white"><input type="number" id="p2-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm text-white"></div>
+                <div class="flex gap-2"><input type="text" id="p3-n" placeholder="P4 Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm text-white"><input type="number" id="p3-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm text-white"></div>
+            </div>
+            <button onclick="saveRoster()" class="w-full bg-emerald-600 py-3 rounded-xl font-bold uppercase text-sm">Lock In Players</button>
+        </section>
 
-    function saveRoster() {
-        roster = [];
-        for(let i=0; i<4; i++) {
-            let name = document.getElementById(`p${i}-n`).value || `P${i+1}`;
-            let idx = parseFloat(document.getElementById(`p${i}-i`).value) || 0;
-            // Calculate Course Handicap
-            let courseHcp = Math.round((idx * (course.slope / 113)) + (course.rating - course.par));
-            roster.push({ name, idx, courseHcp });
-        }
-        
-        applyDots();
-        document.getElementById('setup').classList.add('hidden');
-        updateDisplay();
-    }
-
-    function applyDots() {
-        // Clear old dots
-        for(let h=1; h<=18; h++) document.getElementById(`dots-${h}`).innerHTML = '';
-        
-        roster.forEach((p, pIdx) => {
-            for(let h=1; h<=18; h++) {
-                let hcpRank = course.hcp[h-1];
-                let strokes = 0;
-                if (p.courseHcp >= hcpRank) strokes = 1;
-                if (p.courseHcp >= hcpRank + 18) strokes = 2; // Double dots
-                
-                if(strokes > 0) {
-                    const dotHtml = `<div class="w-1 h-1 rounded-full bg-amber-500"></div>`.repeat(strokes);
-                    document.getElementById(`dots-${h}`).innerHTML += dotHtml;
-                }
-            }
-        });
-    }
-
-    function scoreHole(n, isP3) {
-        if(roster.length < 4) return alert("Setup players first!");
-        
-        let holeData = { gross: [], net: [] };
-        
-        // 1. Moose Knuckle
-        if(isP3 && confirm("Moose Knuckle?")) {
-            let res = prompt("1:Birdie(+$5 T1), 2:Par(+$2 T1), 3:Bogey(+$1 T2)");
-            if(res === '1') totals.a += 5;
-            if(res === '2') totals.a += 2;
-            if(res === '3') totals.b += 1;
-        }
-        
-        // 2. Gross & Net Entry
-        roster.forEach((p, i) => {
-            let gross = parseInt(prompt(`${p.name} (Hcp ${p.courseHcp}) Score:`)) || 0;
-            let strokes = 0;
-            if (p.courseHcp >= course.hcp[n-1]) strokes = 1;
-            if (p.courseHcp >= course.hcp[n-1] + 18) strokes = 2;
+        <main id="game-ui">
+            <div id="grid" class="grid grid-cols-6 gap-2 mb-6"></div>
             
-            let net = gross - strokes;
-            holeData.gross[i] = gross;
-            holeData.net[i] = net;
+            <div class="card bg-emerald-950/30 border-emerald-500/50">
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nassau Status</h3>
+                        <div id="nassau-status" class="text-xl font-mono text-emerald-400">All Square</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 pt-2 border-t border-emerald-900">
+                        <div>
+                            <h3 id="t1-label" class="text-[10px] font-bold text-slate-500 uppercase">Team 1 Trash</h3>
+                            <div id="t1-money" class="text-lg font-mono">$0</div>
+                        </div>
+                        <div>
+                            <h3 id="t2-label" class="text-[10px] font-bold text-slate-500 uppercase">Team 2 Trash</h3>
+                            <div id="t2-money" class="text-lg font-mono">$0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 
-            // Trash Detection
-            if(gross === course.pars[n-1] - 1) i < 2 ? totals.a += 1 : totals.b += 1;
-            if(gross === 1) i < 2 ? totals.a += 100 : totals.b += 100;
-        });
+    <script>
+        const course = {
+            name: "Logan River", rating: 70.1, slope: 121, par: 71,
+            pars: [4,4,3,4,4,3,4,4,4,4,4,3,4,4,3,4,5,4],
+            hcp: [1, 13, 11, 7, 3, 15, 17, 5, 9, 2, 12, 16, 10, 4, 18, 14, 6, 8]
+        };
 
-        // 3. Nassau Logic (Low Net Team Score)
-        let teamANet = Math.min(holeData.net[0], holeData.net[1]);
-        let teamBNet = Math.min(holeData.net[2], holeData.net[3]);
-        
-        if(teamANet < teamBNet) totals.nassau += 1; // Team A wins hole
-        else if(teamBNet < teamANet) totals.nassau -= 1; // Team B wins hole
+        let roster = [];
+        let totals = { t1_money: 0, t2_money: 0, nassau: 0 };
 
-        holeResults[n] = holeData;
-        document.getElementById(`hole-${n}`).classList.add('score-entered');
-        updateDisplay();
-    }
+        function init() {
+            const gDiv = document.getElementById('grid');
+            gDiv.innerHTML = '';
+            for(let i=1; i<=18; i++) {
+                const isP3 = course.pars[i-1] === 3;
+                gDiv.innerHTML += `
+                    <button id="hole-${i}" onclick="scoreHole(${i}, ${isP3})" class="bg-slate-800 h-16 rounded-lg border border-slate-700 flex flex-col items-center justify-center relative overflow-hidden">
+                        <span class="text-[10px] text-slate-500">${i}</span>
+                        <div id="dots-${i}" class="flex flex-wrap justify-center px-1"></div>
+                        ${isP3 ? '<div class="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>' : ''}
+                    </button>`;
+            }
+        }
 
-    function updateDisplay() {
-        let nassauText = totals.nassau > 0 ? `Team 1 +${totals.nassau}` : (totals.nassau < 0 ? `Team 2 +${Math.abs(totals.nassau)}` : "All Square");
-        document.getElementById('ledger-a').innerHTML = `<span class="text-slate-400 text-xs">Total</span><br>${roster[0].name}/${roster[1].name}: $${totals.a}`;
-        document.getElementById('ledger-b').innerHTML = `<span class="text-slate-400 text-xs">Total</span><br>${roster[2].name}/${roster[3].name}: $${totals.b}`;
-        document.getElementById('display-names').innerHTML = `<span class="text-emerald-400 font-bold">Nassau: ${nassauText}</span>`;
-    }
-</script>
+        function saveRoster() {
+            roster = [];
+            for(let i=0; i<4; i++) {
+                let name = document.getElementById(`p${i}-n`).value || `P${i+1}`;
+                let idx = parseFloat(document.getElementById(`p${i}-i`).value) || 0;
+                let ch = Math.round((idx * (course.slope / 113)) + (course.rating - course.par));
+                roster.push({ name, idx, ch });
+            }
+            
+            // Labels
+            document.getElementById('t1-label').innerText = `${roster[0].name}/${roster[1].name}`;
+            document.getElementById('t2-label').innerText = `${roster[2].name}/${roster[3].name}`;
+            
+            applyDots();
+            document.getElementById('setup').classList.add('hidden');
+        }
+
+        function applyDots() {
+            for(let h=1; h<=18; h++) {
+                const dDiv = document.getElementById(`dots-${h}`);
+                dDiv.innerHTML = '';
+                roster.forEach(p => {
+                    if (p.ch >= course.hcp[h-1]) dDiv.innerHTML += '<div class="dot"></div>';
+                    if (p.ch >= course.hcp[h-1] + 18) dDiv.innerHTML += '<div class="dot"></div>';
+                });
+            }
+        }
+
+        function scoreHole(n, isP3) {
+            if(roster.length < 4) return alert("Run Setup first!");
+            
+            let netScores = [];
+            
+            if(isP3 && confirm("Moose Knuckle?")) {
+                let res = prompt("1:Birdie(+$5 T1), 2:Par(+$2 T1), 3:Bogey(+$1 T2)");
+                if(res === '1') totals.t1_money += 5;
+                if(res === '2') totals.t1_money += 2;
+                if(res === '3') totals.t2_money += 1;
+            }
+            
+            roster.forEach((p, i) => {
+                let gross = parseInt(prompt(`${p.name} Score:`)) || 0;
+                let dots = 0;
+                if(p.ch >= course.hcp[n-1]) dots = 1;
+                if(p.ch >= course.hcp[n-1] + 18) dots = 2;
+                netScores[i] = gross - dots;
+
+                // Trash
+                if(gross === course.pars[n-1] - 1) i < 2 ? totals.t1_money += 1 : totals.t2_money += 1;
+            });
+
+            let t1_best = Math.min(netScores[0], netScores[1]);
+            let t2_best = Math.min(netScores[2], netScores[3]);
+
+            if(t1_best < t2_best) totals.nassau += 1;
+            if(t2_best < t1_best) totals.nassau -= 1;
+
+            document.getElementById(`hole-${n}`).classList.add('score-entered');
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('t1-money').innerText = `$${totals.t1_money}`;
+            document.getElementById('t2-money').innerText = `$${totals.t2_money}`;
+            let n = totals.nassau;
+            document.getElementById('nassau-status').innerText = n > 0 ? `Team 1 +${n}` : (n < 0 ? `Team 2 +${Math.abs(n)}` : "All Square");
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
