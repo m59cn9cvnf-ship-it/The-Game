@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: Trash Log</title>
+    <title>THE GAME: Jeff & Phil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
@@ -25,9 +25,9 @@
     <div id="app" class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-4 px-2">
             <h1 class="text-xl font-black italic text-emerald-400">THE GAME</h1>
-            <div class="flex gap-2">
-                <button onclick="clearAllData()" class="text-[9px] bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-900/50 uppercase font-bold">Reset</button>
-                <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-[10px] bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 uppercase font-bold text-emerald-400">Setup</button>
+            <div class="flex gap-2 text-[10px]">
+                <button onclick="clearAllData()" class="bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-900/50 uppercase font-bold">Reset</button>
+                <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 uppercase font-bold text-emerald-400">Setup</button>
             </div>
         </header>
 
@@ -69,8 +69,8 @@
             </div>
             <div id="match-list" class="space-y-1 mb-3"></div>
             <div id="trash-summary" class="grid grid-cols-2 gap-2 text-[11px] font-mono border-t border-slate-800 pt-2">
-                <div id="t1-trash" class="text-emerald-400">T1 Trash: $0</div>
-                <div id="t2-trash" class="text-amber-400 text-right">T2 Trash: $0</div>
+                <div id="t1-trash" class="text-emerald-400">T1: $0</div>
+                <div id="t2-trash" class="text-amber-400 text-right">T2: $0</div>
             </div>
         </div>
     </div>
@@ -89,8 +89,7 @@
     <div id="log-modal" class="modal">
         <div class="bg-slate-900 p-6 rounded-2xl w-full max-w-sm border border-slate-700 max-h-[80vh] flex flex-col">
             <h2 class="text-center font-black text-emerald-500 uppercase mb-4 tracking-tighter">Trash History</h2>
-            <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2">
-                </div>
+            <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2"></div>
             <button onclick="document.getElementById('log-modal').style.display='none'" class="w-full bg-slate-700 py-3 rounded-xl font-bold uppercase text-xs">Close Log</button>
         </div>
     </div>
@@ -198,66 +197,100 @@
             let t1_t = 0, t2_t = 0;
             let logHtml = '';
             let streaks = [0,0,0,0];
+            let currentJackpotPool = 0;
 
             function addToLog(hole, player, type, amt, tIdx) {
-                let teamName = tIdx < 2 ? roster.t1 : roster.t2;
                 logHtml = `<div class="log-row"><span>H${hole} - ${player} (${type})</span><span class="${tIdx < 2 ? 'text-emerald-400':'text-amber-400'}">+$${amt}</span></div>` + logHtml;
                 tIdx < 2 ? t1_t += amt : t2_t += amt;
             }
 
             for(let h=1; h<=18; h++) {
-                if(mk_results[h]) {
-                    if(mk_results[h] === '1') addToLog(h, "Team A", "Moose Birdie", 5, 0);
-                    if(mk_results[h] === '2') addToLog(h, "Team A", "Moose Par", 2, 0);
-                    if(mk_results[h] === '3') addToLog(h, "Team B", "Moose Challenger", 1, 2);
-                }
+                let ready = true, nets = [], gScores = [];
+                let hPar = course.pars[h-1];
 
                 for(let i=0; i<4; i++) {
                     let g = scores[`${i}_${h}`];
+                    if(g === '' || g === undefined) { ready = false; break; }
+                    gScores[i] = g;
+                    nets[i] = g - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
+                }
+
+                // 1. Moose Knuckle
+                if(mk_results[h]) {
+                    if(mk_results[h] === '1') addToLog(h, roster.t1, "Moose Birdie", 5, 0);
+                    if(mk_results[h] === '2') addToLog(h, roster.t1, "Moose Par", 2, 0);
+                    if(mk_results[h] === '3') addToLog(h, roster.t2, "Moose Challenger", 1, 2);
+                }
+
+                // 2. Trash (Double Doug / Phil / Turkey)
+                for(let i=0; i<4; i++) {
+                    let g = gScores[i];
                     if(!g) { streaks[i] = 0; continue; }
-                    let par = course.pars[h-1];
 
-                    // Birdie Check (GROSS ONLY)
-                    if(g === par - 1) {
-                        addToLog(h, roster.players[i].name, "Birdie", 2, i);
-                        if(!mk_results[h]) { // Turkey streak only on non-MK birdies
-                            streaks[i]++;
-                            if(streaks[i] === 3) {
-                                addToLog(h, roster.players[i].name, "TURKEY!", 5, i);
-                                streaks[i] = 0;
-                            }
-                        } else { streaks[i] = 0; }
-                    } else { streaks[i] = 0; }
-
-                    // Eagle+ Check
-                    if(g <= par - 2) addToLog(h, roster.players[i].name, "Eagle/Jackpot Phil", 10, i);
+                    if(g <= hPar - 2 && g > 1) {
+                        if(hPar === 5) addToLog(h, roster.players[i].name, "DOUBLE DOUG", 8, i);
+                        else addToLog(h, roster.players[i].name, "JACKPOT PHIL", 10, i);
+                    }
                     if(g === 1) addToLog(h, roster.players[i].name, "HOLE IN ONE!", 100, i);
+
+                    if(g === hPar - 1 && !mk_results[h]) {
+                        streaks[i]++;
+                        if(streaks[i] === 3) { addToLog(h, roster.players[i].name, "TURKEY!", 5, i); streaks[i] = 0; }
+                    } else streaks[i] = 0;
+                }
+
+                // 3. SPECIAL JACKPOTS (Jeff / Phil / Same)
+                if(ready) {
+                    let bogey = hPar + 1;
+                    let double = hPar + 2;
+                    let allSame = gScores.every(v => v === gScores[0]);
+                    let allOverBogey = gScores.every(v => v > bogey);
+                    let allDoublePlus = gScores.every(v => v >= double);
+
+                    if(allDoublePlus) {
+                        currentJackpotPool += 10;
+                        addToLog(h, "GROUP", "JACKPOT PHIL (+10)", 0, 0); 
+                    } else if(allOverBogey) {
+                        currentJackpotPool += 5;
+                        addToLog(h, "GROUP", "JACKPOT JEFF (+5)", 0, 0);
+                    } else if(allSame) {
+                        currentJackpotPool += 2;
+                        addToLog(h, "GROUP", "JACKPOT (+2)", 0, 0);
+                    }
+
+                    let t1Net = Math.min(nets[0], nets[1]);
+                    let t2Net = Math.min(nets[2], nets[3]);
+                    
+                    if(t1Net < t2Net && currentJackpotPool > 0) {
+                        addToLog(h, roster.t1, "JACKPOT WIN", currentJackpotPool, 0);
+                        currentJackpotPool = 0;
+                    } else if(t2Net < t1Net && currentJackpotPool > 0) {
+                        addToLog(h, roster.t2, "JACKPOT WIN", currentJackpotPool, 2);
+                        currentJackpotPool = 0;
+                    }
                 }
             }
             
-            document.getElementById('log-content').innerHTML = logHtml || '<div class="text-center text-slate-600 text-xs mt-10">No trash recorded yet.</div>';
+            document.getElementById('log-content').innerHTML = logHtml || '<div class="text-center text-slate-600 text-xs mt-10">No trash recorded.</div>';
             
-            // Re-calculate Matches
             let matchHistory = [{ start: 1, name: 'Original' }];
             Object.keys(presses).forEach(h => matchHistory.push({ start: parseInt(h), name: `Press H${h}` }));
             const mStatus = matchHistory.map(m => {
                 let diff = 0;
                 for(let h=m.start; h<=18; h++) {
-                    let ready = true, nets = [];
+                    let r = true, ns = [];
                     for(let i=0; i<4; i++) {
                         let gs = scores[`${i}_${h}`];
-                        if(gs === '' || gs === undefined) { ready = false; break; }
-                        nets[i] = gs - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
+                        if(gs === '' || gs === undefined) { r = false; break; }
+                        ns[i] = gs - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
                     }
-                    if(ready) {
-                        let t1Best = Math.min(nets[0], nets[1]);
-                        let t2Best = Math.min(nets[2], nets[3]);
-                        if(t1Best < t2Best) diff++; else if(t2Best < t1Best) diff--;
+                    if(r) {
+                        let t1B = Math.min(ns[0], ns[1]), t2B = Math.min(ns[2], ns[3]);
+                        if(t1B < t2B) diff++; else if (t2B < t1B) diff--;
                     }
                 }
                 return { name: m.name, diff: diff };
             });
-
             updateLedger(mStatus, t1_t, t2_t);
         }
 
@@ -268,8 +301,8 @@
                 let s = m.diff === 0 ? "AS" : (m.diff > 0 ? `${roster.t1} +${m.diff}` : `${roster.t2} +${Math.abs(m.diff)}`);
                 mList.innerHTML += `<div class="flex justify-between text-xs font-bold"><span>${m.name}</span><span class="text-emerald-400">${s}</span></div>`;
             });
-            document.getElementById('t1-trash').innerText = `${roster.t1} Trash: $${t1}`;
-            document.getElementById('t2-trash').innerText = `${roster.t2} Trash: $${t2}`;
+            document.getElementById('t1-trash').innerText = `${roster.t1}: $${t1}`;
+            document.getElementById('t2-trash').innerText = `${roster.t2}: $${t2}`;
             document.getElementById('press-btn').classList.toggle('hidden', matches[0].diff === 0);
         }
 
