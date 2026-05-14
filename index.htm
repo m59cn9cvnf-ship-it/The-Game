@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: Momentum</title>
+    <title>THE GAME</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
@@ -15,9 +15,9 @@
         .score-cell { height: 55px; background: #0f172a; font-weight: bold; font-size: 1.2rem; }
         .stroke-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #fbbf24; border-radius: 50%; }
         
-        /* Press Visuals */
-        .press-single { border-left: 4px solid #10b981 !important; }
-        .press-double { border-left: 8px double #10b981 !important; }
+        /* Fixed Press Visuals */
+        .press-single { border-left: 5px solid #10b981 !important; }
+        .press-double { border-left: 10px double #10b981 !important; }
 
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
     </style>
@@ -72,9 +72,12 @@
 
     <div id="score-modal" class="modal">
         <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-xs border border-slate-700">
-            <div id="modal-title" class="text-center mb-4 font-bold text-emerald-400">Hole Entry</div>
+            <div id="modal-title" class="text-center mb-4 font-bold text-emerald-400 text-lg">Hole Entry</div>
+            <div id="mk-container" class="hidden mb-6">
+                <button id="mk-btn" onclick="triggerMK()" class="w-full py-3 rounded-lg border-2 border-slate-600 bg-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-300">Challenge Moose Knuckle</button>
+            </div>
             <div class="space-y-4" id="modal-inputs"></div>
-            <button onclick="closeModal()" class="w-full mt-6 bg-emerald-600 py-4 rounded-xl font-bold">SAVE HOLE</button>
+            <button onclick="closeModal()" class="w-full mt-6 bg-emerald-600 py-4 rounded-xl font-bold uppercase tracking-tight">Save & Close</button>
         </div>
     </div>
 
@@ -85,7 +88,8 @@
         };
         let roster = JSON.parse(localStorage.getItem('golf_roster')) || { t1: "Team 1", t2: "Team 2", players: [] };
         let scores = JSON.parse(localStorage.getItem('golf_scores')) || {};
-        let presses = JSON.parse(localStorage.getItem('golf_presses')) || {}; // { hole: 'single'|'double' }
+        let presses = JSON.parse(localStorage.getItem('golf_presses')) || {}; 
+        let mk_results = JSON.parse(localStorage.getItem('golf_mk')) || {}; 
         let totals = { t1_trash: 0, t2_trash: 0, nassau: 0 };
         let activeHole = null;
 
@@ -126,11 +130,12 @@
             const tbody = document.getElementById('player-rows');
             tbody.innerHTML = '';
             roster.players.forEach((p, pIdx) => {
-                let row = `<tr><td class="sticky-col"><div class="text-[10px] font-bold text-emerald-500 uppercase">${pIdx < 2 ? roster.t1 : roster.t2}</div><div class="text-xs font-bold">${p.name}</div></td>`;
+                let row = `<tr><td class="sticky-col"><div class="text-[9px] font-bold text-emerald-500 uppercase">${pIdx < 2 ? roster.t1 : roster.t2}</div><div class="text-xs font-bold">${p.name}</div></td>`;
                 for(let h=1; h<=18; h++) {
                     const score = scores[`${pIdx}_${h}`] || '';
                     const pressClass = presses[h] === 'double' ? 'press-double' : (presses[h] === 'single' ? 'press-single' : '');
-                    row += `<td class="score-cell ${pressClass}" onclick="openModal(${h})">
+                    const isScore = score !== '';
+                    row += `<td class="score-cell ${pressClass} ${isScore ? 'bg-emerald-900/20' : ''}" onclick="openModal(${h})">
                                 <span>${score}</span>
                                 ${p.ch >= course.hcp[h-1] ? '<div class="stroke-dot"></div>' : ''}
                             </td>`;
@@ -138,11 +143,10 @@
                 tbody.innerHTML += row + '</tr>';
             });
             
-            // Apply borders to headers too
             for(let h=1; h<=18; h++) {
                 const cls = presses[h] === 'double' ? 'press-double' : (presses[h] === 'single' ? 'press-single' : '');
-                document.getElementById(`h-head-${h}`).className = cls;
-                document.getElementById(`p-head-${h}`).className = cls;
+                document.getElementById(`h-head-${h}`).className = `hole-header ${cls}`;
+                document.getElementById(`p-head-${h}`).className = `par-row ${cls}`;
             }
             calculateEverything();
         }
@@ -150,6 +154,18 @@
         function openModal(h) {
             activeHole = h;
             document.getElementById('modal-title').innerText = `HOLE ${h}`;
+            document.getElementById('mk-container').classList.toggle('hidden', course.pars[h-1] !== 3);
+            
+            // Highlight MK button if already set
+            const mkBtn = document.getElementById('mk-btn');
+            if(mk_results[h]) {
+                mkBtn.innerText = "MK RECORDED";
+                mkBtn.classList.replace('bg-slate-700', 'bg-emerald-700');
+            } else {
+                mkBtn.innerText = "CHALLENGE MOOSE KNUCKLE";
+                mkBtn.classList.replace('bg-emerald-700', 'bg-slate-700');
+            }
+
             const inputArea = document.getElementById('modal-inputs');
             inputArea.innerHTML = '';
             roster.players.forEach((p, i) => {
@@ -163,10 +179,18 @@
             document.getElementById('mod-in-0').focus();
         }
 
+        function triggerMK() {
+            let res = prompt("MK Outcome?\n1: Birdie (+$5 Team A)\n2: Par (+$2 Team A)\n3: Bogey (+$1 Team B)\n4: Clear MK Result");
+            if(res === '4') delete mk_results[activeHole];
+            else if(['1','2','3'].includes(res)) mk_results[activeHole] = res;
+            localStorage.setItem('golf_mk', JSON.stringify(mk_results));
+            openModal(activeHole); // Refresh UI
+        }
+
         function closeModal() {
             for(let i=0; i<4; i++) {
                 let v = document.getElementById(`mod-in-${i}`).value;
-                if(v) scores[`${i}_${activeHole}`] = parseInt(v);
+                scores[`${i}_${activeHole}`] = v ? parseInt(v) : '';
             }
             localStorage.setItem('golf_scores', JSON.stringify(scores));
             document.getElementById('score-modal').style.display = 'none';
@@ -174,10 +198,15 @@
         }
 
         function openPressMenu() {
-            let type = prompt("Press Type?\n1: Single (Bold Line)\n2: Double (Double Line)\n3: Delete Press on this hole");
-            if(type === '1') presses[activeHole || 1] = 'single';
-            else if(type === '2') presses[activeHole || 1] = 'double';
-            else if(type === '3') delete presses[activeHole || 1];
+            if(!activeHole || activeHole >= 18) return alert("Cannot press after Hole 18.");
+            
+            let nextHole = activeHole + 1;
+            let type = prompt(`START PRESS ON HOLE ${nextHole}?\n1: Single (Solid Green Line)\n2: Double (Double Green Line)\n3: Delete press starting on Hole ${nextHole}`);
+            
+            if(type === '1') presses[nextHole] = 'single';
+            else if(type === '2') presses[nextHole] = 'double';
+            else if(type === '3') delete presses[nextHole];
+            
             localStorage.setItem('golf_presses', JSON.stringify(presses));
             buildTable();
         }
@@ -187,11 +216,18 @@
             for(let h=1; h<=18; h++) {
                 let nets = [];
                 let ready = true;
+                
+                // Add MK Results to Trash
+                if(mk_results[h] === '1') totals.t1_trash += 5;
+                if(mk_results[h] === '2') totals.t1_trash += 2;
+                if(mk_results[h] === '3') totals.t2_trash += 1;
+
                 for(let i=0; i<4; i++) {
                     let g = scores[`${i}_${h}`];
-                    if(!g) { ready = false; continue; }
+                    if(g === '' || g === undefined) { ready = false; continue; }
                     nets[i] = g - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
                     if(g === course.pars[h-1] - 1) i < 2 ? totals.t1_trash += 1 : totals.t2_trash += 1;
+                    if(g === 1) i < 2 ? totals.t1_trash += 100 : totals.t2_trash += 100;
                 }
                 if(ready) {
                     let t1Net = Math.min(nets[0], nets[1]);
