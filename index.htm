@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: v5.2</title>
+    <title>THE GAME: Nassau Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
@@ -48,7 +48,7 @@
         </section>
 
         <div class="table-container mb-4 shadow-2xl">
-            <table>
+            <table id="score-table">
                 <thead>
                     <tr id="header-row" class="bg-slate-800 text-slate-400 text-[11px]"><th class="sticky-col">HOLE</th></tr>
                     <tr id="par-row" class="bg-slate-900 text-slate-500 text-[10px]"><th class="sticky-col text-[8px]">PAR/HCP</th></tr>
@@ -59,22 +59,23 @@
 
         <div class="card bg-slate-900 border-emerald-500/30 sticky bottom-2 shadow-2xl">
             <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
-                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Live Betting Ledger</div>
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nassau Match Status</div>
                 <div class="flex gap-2">
                     <button onclick="document.getElementById('log-modal').style.display='flex'" class="bg-slate-800 px-3 py-1 rounded text-[9px] font-bold uppercase border border-slate-700">Trash Log</button>
                     <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-3 py-1 rounded text-[9px] font-black uppercase">Add Press</button>
                 </div>
             </div>
-            <div id="match-list" class="space-y-1 mb-2 text-xs"></div>
+            
+            <div id="match-list" class="grid grid-cols-1 gap-1 mb-2"></div>
             
             <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-500 border-t border-slate-800 pt-2 uppercase">
-                <div id="t1-trash-sub">T1 Trash: $0</div>
-                <div id="t2-trash-sub" class="text-right">T2 Trash: $0</div>
+                <div id="t1-trash-sub">Trash: $0</div>
+                <div id="t2-trash-sub" class="text-right">Trash: $0</div>
             </div>
             
             <div class="grid grid-cols-2 gap-2 text-[15px] font-black pt-1 uppercase italic">
-                <div id="t1-final" class="text-emerald-400">T1 Total: $0</div>
-                <div id="t2-final" class="text-amber-400 text-right">T2 Total: $0</div>
+                <div id="t1-final" class="text-emerald-400">T1: $0</div>
+                <div id="t2-final" class="text-amber-400 text-right">T2: $0</div>
             </div>
         </div>
     </div>
@@ -84,9 +85,7 @@
             <div class="flex justify-between items-center mb-4">
                 <div id="modal-title" class="font-black text-emerald-400 text-lg uppercase tracking-tight">Hole Entry</div>
             </div>
-            
             <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-2 rounded-lg border border-slate-600 bg-slate-700 text-[10px] font-black uppercase text-slate-300">Moose Knuckle</button></div>
-            
             <div class="space-y-3" id="modal-inputs-area"></div>
             <button onclick="closeModal()" class="w-full mt-6 bg-emerald-600 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg">Save & Finish Hole</button>
         </div>
@@ -280,11 +279,18 @@
             }
             document.getElementById('log-content').innerHTML = logH || 'No trash yet.';
             
-            let mH = [{ start: 1, name: 'Original' }]; Object.keys(presses).forEach(h => mH.push({ start: parseInt(h), name: `Press H${h}` }));
+            // NASSAU SPLIT LOGIC
+            let mH = [
+                { start: 1, end: 9, name: 'Front 9' },
+                { start: 10, end: 18, name: 'Back 9' },
+                { start: 1, end: 18, name: 'Total 18' }
+            ]; 
+            Object.keys(presses).forEach(h => mH.push({ start: parseInt(h), end: 18, name: `Press H${h}` }));
+            
             let totalMD = 0;
             const mS = mH.map(m => {
                 let d = 0;
-                for(let h=m.start; h<=18; h++) {
+                for(let h=m.start; h<=m.end; h++) {
                     let r = true, ns = [];
                     for(let i=0; i<4; i++) { let d = holeData[h]?.[i]; if(!d || d.gross === '') { r = false; break; } ns[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
                     if(r) { let aB = Math.min(ns[0], ns[1]), bB = Math.min(ns[2], ns[3]); if(aB < bB) d++; else if(bB < aB) d--; }
@@ -294,16 +300,18 @@
             });
             
             document.getElementById('match-list').innerHTML = '';
+            let anyoneDown = false;
             mS.forEach(m => {
+                if(m.diff !== 0) anyoneDown = true;
                 let s = m.diff === 0 ? "AS" : (m.diff > 0 ? `${roster.t1} +${m.diff}` : `${roster.t2} +${Math.abs(m.diff)}`);
-                document.getElementById('match-list').innerHTML += `<div class="flex justify-between text-[10px] font-bold"><span>${m.name}</span><span class="text-emerald-400">${s}</span></div>`;
+                document.getElementById('match-list').innerHTML += `<div class="flex justify-between items-center"><span class="font-bold">${m.name}</span><span class="font-mono text-emerald-400 bg-slate-800 px-2 py-0.5 rounded">${s}</span></div>`;
             });
 
-            document.getElementById('t1-trash-sub').innerText = `${roster.t1} Trash: $${t1_t}`;
-            document.getElementById('t2-trash-sub').innerText = `${roster.t2} Trash: $${t2_t}`;
+            document.getElementById('t1-trash-sub').innerText = `Trash: $${t1_t}`;
+            document.getElementById('t2-trash-sub').innerText = `Trash: $${t2_t}`;
             document.getElementById('t1-final').innerText = `${roster.t1}: $${t1_t + totalMD}`;
             document.getElementById('t2-final').innerText = `${roster.t2}: $${t2_t - totalMD}`;
-            document.getElementById('press-btn').classList.toggle('hidden', mS.every(m => m.diff === 0));
+            document.getElementById('press-btn').classList.toggle('hidden', !anyoneDown);
         }
 
         function openPressMenu() {
