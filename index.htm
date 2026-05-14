@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: Nassau Edition</title>
+    <title>THE GAME: Nassau Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
@@ -15,12 +15,15 @@
         .score-cell { height: 55px; background: #0f172a; font-weight: bold; font-size: 1.2rem; }
         .stat-col { background: #1e293b; font-weight: 800; color: #10b981; min-width: 50px; }
         .stroke-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #fbbf24; border-radius: 50%; }
-        .jp-badge { font-size: 7px; font-weight: 900; padding: 1px 3px; border-radius: 3px; background: #ef4444; color: white; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 5; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 10px; }
         .trash-btn { background: #334155; border: 1px solid #475569; border-radius: 6px; padding: 8px 4px; font-size: 8px; font-weight: 900; color: #94a3b8; line-height: 1.2; }
         .trash-btn.active { background: #10b981; border-color: #34d399; color: white; box-shadow: 0 0 10px rgba(16,185,129,0.3); }
         .trash-btn.active-red { background: #ef4444; border-color: #f87171; color: white; }
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 900; font-size: 12px; z-index: 200; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.2); pointer-events: none; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 900; font-size: 12px; z-index: 200; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); pointer-events: none; }
+        .bet-table { width: 100%; font-size: 10px; border-collapse: collapse; }
+        .bet-table th { background: #0f172a; color: #64748b; text-align: left; padding: 4px; border: none; font-size: 8px; text-transform: uppercase; }
+        .bet-table td { padding: 4px; border-bottom: 1px solid #334155; text-align: left; }
+        .bet-status { font-family: monospace; font-weight: bold; text-align: right !important; }
     </style>
 </head>
 <body class="p-2">
@@ -48,7 +51,7 @@
         </section>
 
         <div class="table-container mb-4 shadow-2xl">
-            <table id="score-table">
+            <table>
                 <thead>
                     <tr id="header-row" class="bg-slate-800 text-slate-400 text-[11px]"><th class="sticky-col">HOLE</th></tr>
                     <tr id="par-row" class="bg-slate-900 text-slate-500 text-[10px]"><th class="sticky-col text-[8px]">PAR/HCP</th></tr>
@@ -57,23 +60,21 @@
             </table>
         </div>
 
-        <div class="card bg-slate-900 border-emerald-500/30 sticky bottom-2 shadow-2xl">
-            <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
-                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nassau Match Status</div>
+        <div class="card bg-slate-950 border-emerald-500/30 sticky bottom-2 shadow-2xl">
+            <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-800">
+                <div class="text-[10px] font-black text-emerald-500 uppercase tracking-widest italic">Betting Ledger</div>
                 <div class="flex gap-2">
                     <button onclick="document.getElementById('log-modal').style.display='flex'" class="bg-slate-800 px-3 py-1 rounded text-[9px] font-bold uppercase border border-slate-700">Trash Log</button>
-                    <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-3 py-1 rounded text-[9px] font-black uppercase">Add Press</button>
+                    <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-3 py-1 rounded text-[9px] font-black uppercase shadow-lg shadow-red-900/20">Press</button>
                 </div>
             </div>
             
-            <div id="match-list" class="grid grid-cols-1 gap-1 mb-2"></div>
+            <table class="bet-table mb-2">
+                <thead><tr><th>Match</th><th class="text-right">Score</th></tr></thead>
+                <tbody id="match-tbody"></tbody>
+            </table>
             
-            <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-500 border-t border-slate-800 pt-2 uppercase">
-                <div id="t1-trash-sub">Trash: $0</div>
-                <div id="t2-trash-sub" class="text-right">Trash: $0</div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-2 text-[15px] font-black pt-1 uppercase italic">
+            <div class="grid grid-cols-2 gap-2 text-[14px] font-black border-t border-slate-800 pt-2 uppercase italic">
                 <div id="t1-final" class="text-emerald-400">T1: $0</div>
                 <div id="t2-final" class="text-amber-400 text-right">T2: $0</div>
             </div>
@@ -82,12 +83,10 @@
 
     <div id="score-modal" class="modal">
         <div class="bg-slate-800 p-4 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl overflow-y-auto max-h-[95vh]">
-            <div class="flex justify-between items-center mb-4">
-                <div id="modal-title" class="font-black text-emerald-400 text-lg uppercase tracking-tight">Hole Entry</div>
-            </div>
+            <div id="modal-title" class="font-black text-emerald-400 text-lg uppercase mb-4 text-center">Hole Entry</div>
             <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-2 rounded-lg border border-slate-600 bg-slate-700 text-[10px] font-black uppercase text-slate-300">Moose Knuckle</button></div>
             <div class="space-y-3" id="modal-inputs-area"></div>
-            <button onclick="closeModal()" class="w-full mt-6 bg-emerald-600 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg">Save & Finish Hole</button>
+            <button onclick="closeModal()" class="w-full mt-6 bg-emerald-600 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg">Save Hole</button>
         </div>
     </div>
 
@@ -100,15 +99,15 @@
     </div>
 
     <script>
-        let course = JSON.parse(localStorage.getItem('golf_course')) || {
-            name: "Logan River", rating: 70.1, slope: 121, par: 71,
-            pars: [4,4,3,4,4,3,4,4,4,4,4,3,4,4,3,4,5,4],
-            hcp: [1,13,11,7,3,15,17,5,9,2,12,16,10,4,18,14,6,8]
-        };
+        let course = JSON.parse(localStorage.getItem('golf_course')) || { name: "Logan River", rating: 70.1, slope: 121, par: 71, pars: [4,4,3,4,4,3,4,4,4,4,4,3,4,4,3,4,5,4], hcp: [1,13,11,7,3,15,17,5,9,2,12,16,10,4,18,14,6,8] };
         let roster = JSON.parse(localStorage.getItem('golf_roster')) || { t1: "T1", t2: "T2", players: [], nassauVal: 0 };
         let holeData = JSON.parse(localStorage.getItem('golf_holedata')) || {}; 
-        let presses = JSON.parse(localStorage.getItem('golf_presses')) || {}; 
         let mk_results = JSON.parse(localStorage.getItem('golf_mk')) || {}; 
+        let activeBets = JSON.parse(localStorage.getItem('golf_bets')) || [
+            { id: 'f9', name: 'Front 9', start: 1, end: 9, type: 'f9' },
+            { id: 'b9', name: 'Back 9', start: 10, end: 18, type: 'b9' },
+            { id: '18', name: 'Total 18', start: 1, end: 18, type: '18' }
+        ];
         let activeHole = 1;
         let currentModalState = {};
 
@@ -125,7 +124,6 @@
 
             const t1Div = document.getElementById('t1-players');
             const t2Div = document.getElementById('t2-players');
-            t1Div.innerHTML = ''; t2Div.innerHTML = '';
             for(let i=0; i<4; i++) {
                 const target = i < 2 ? t1Div : t2Div;
                 target.innerHTML += `<input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="Name" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] mb-1 border border-slate-700"><input type="number" id="p-i-${i}" value="${roster.players?.[i]?.idx ?? ''}" placeholder="Idx" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700 mb-2">`;
@@ -135,29 +133,18 @@
         }
 
         function saveEverything() {
-            course = {
-                name: document.getElementById('course-name').value, rating: parseFloat(document.getElementById('course-rating').value),
-                slope: parseInt(document.getElementById('course-slope').value), par: parseInt(document.getElementById('course-par').value),
-                pars: document.getElementById('course-pars-list').value.split(',').map(Number), hcp: document.getElementById('course-hcp-list').value.split(',').map(Number)
-            };
+            course = { name: document.getElementById('course-name').value, rating: parseFloat(document.getElementById('course-rating').value), slope: parseInt(document.getElementById('course-slope').value), par: parseInt(document.getElementById('course-par').value), pars: document.getElementById('course-pars-list').value.split(',').map(Number), hcp: document.getElementById('course-hcp-list').value.split(',').map(Number) };
             localStorage.setItem('golf_course', JSON.stringify(course));
             roster = { t1: document.getElementById('t1-name-in').value || "T1", t2: document.getElementById('t2-name-in').value || "T2", nassauVal: parseFloat(document.getElementById('nassau-val-in').value) || 0, players: [] };
             for(let i=0; i<4; i++) {
                 let n = document.getElementById(`p-n-${i}`).value || `P${i+1}`;
-                let idx = parseFloat(document.getElementById(`p-i-${i}`).value) || 0;
+                let idxInput = document.getElementById(`p-i-${i}`).value;
+                let idx = idxInput !== "" ? parseFloat(idxInput) : 0;
                 let ch = Math.round((idx * (course.slope / 113)) + (course.rating - course.par));
                 roster.players.push({ name: n, ch, idx: idx });
             }
             localStorage.setItem('golf_roster', JSON.stringify(roster));
             location.reload();
-        }
-
-        function showToast(msg, isRed = false) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.background = isRed ? "#ef4444" : "#10b981";
-            t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, 2000);
         }
 
         function buildTable() {
@@ -177,7 +164,8 @@
                 let row = `<tr><td class="sticky-col"><div class="text-[8px] font-bold text-slate-500 uppercase">${pIdx < 2 ? roster.t1 : roster.t2}</div><div class="text-xs font-bold">${p.name}</div></td>`;
                 for(let h=1; h<=18; h++) {
                     const d = holeData[h]?.[pIdx] || {}; const s = d.gross || ''; if(s !== '') { tG += parseInt(s); tP += course.pars[h-1]; }
-                    const pCls = presses[h] ? (presses[h] === 'double' ? 'border-l-[8px] border-double border-emerald-500' : 'border-l-[4px] border-emerald-500') : '';
+                    let isPress = activeBets.some(b => b.start === h && b.id !== 'f9' && b.id !== 'b9' && b.id !== '18');
+                    let pCls = isPress ? 'border-l-[4px] border-emerald-500' : '';
                     row += `<td class="score-cell ${pCls} ${s!==''?'bg-emerald-900/10':''}" onclick="openModal(${h})"><span>${s}</span>${p.ch >= course.hcp[h-1] ? '<div class="stroke-dot"></div>' : ''}</td>`;
                 }
                 const rel = tG > 0 ? (tG - tP) : 0;
@@ -199,32 +187,25 @@
                     <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-700/50">
                         <div class="flex justify-between items-center mb-2">
                             <label class="text-[10px] font-black uppercase text-slate-500">${p.name}</label>
-                            <input type="number" id="mod-gross-${i}" inputmode="numeric" value="${existing.gross}" 
-                                   class="bg-slate-800 border border-emerald-900 p-2 rounded-lg w-16 text-center font-bold text-xl text-emerald-400"
-                                   oninput="currentModalState[${i}].gross = this.value; if(this.value.length >= 1 && ${i < 3}) document.getElementById('mod-gross-${i+1}').focus()">
+                            <input type="number" id="mod-gross-${i}" inputmode="numeric" value="${existing.gross}" class="bg-slate-800 border border-emerald-900 p-2 rounded-lg w-16 text-center font-bold text-xl text-emerald-400" oninput="currentModalState[${i}].gross = this.value; if(this.value.length >= 1 && ${i < 3}) document.getElementById('mod-gross-${i+1}').focus()">
                         </div>
                         <div class="grid grid-cols-4 gap-1.5">
-                            <button onclick="tapTrash(this, ${i}, 'sandie', 'Sandie ($1)')" class="trash-btn ${existing.sandie ? 'active' : ''}">SANDIE</button>
-                            <button onclick="tapTrash(this, ${i}, 'jSingle', 'Jones Birdie ($3)')" class="trash-btn ${existing.jSingle ? 'active' : ''}">J-BIRD</button>
-                            <button onclick="tapTrash(this, ${i}, 'jDouble', 'Jones Eagle ($5)')" class="trash-btn ${existing.jDouble ? 'active' : ''}">J-EAGLE</button>
-                            <button onclick="tapTrash(this, ${i}, 'j3P', 'Jones 3P ($1 to Opp)', true)" class="trash-btn ${existing.j3P ? 'active-red' : ''}">J-3P</button>
-                            <button onclick="tapTrash(this, ${i}, 'jReversie', 'Jones E Reversie ($5 to Opp)', true)" class="trash-btn col-span-4 ${existing.jReversie ? 'active-red' : ''}">JONES E REVERSIE ($5)</button>
-                            ${course.pars[h-1] === 3 ? `
-                                <button onclick="tapTrash(this, ${i}, 'greenie', 'Greenie ($1)')" class="trash-btn col-span-2 ${existing.greenie ? 'active' : ''}">GREENIE</button>
-                                <button onclick="tapTrash(this, ${i}, 'reversie', 'Reversie ($1 to Opp)', true)" class="trash-btn col-span-2 ${existing.reversie ? 'active-red' : ''}">REVERSIE</button>
-                            ` : ''}
+                            <button onclick="tapTrash(this, ${i}, 'sandie')" class="trash-btn ${existing.sandie ? 'active' : ''}">SANDIE</button>
+                            <button onclick="tapTrash(this, ${i}, 'jSingle')" class="trash-btn ${existing.jSingle ? 'active' : ''}">J-BIRD</button>
+                            <button onclick="tapTrash(this, ${i}, 'jDouble')" class="trash-btn ${existing.jDouble ? 'active' : ''}">J-EAGLE</button>
+                            <button onclick="tapTrash(this, ${i}, 'j3P')" class="trash-btn ${existing.j3P ? 'active-red' : ''}">J-3P</button>
+                            <button onclick="tapTrash(this, ${i}, 'jReversie')" class="trash-btn col-span-4 ${existing.jReversie ? 'active-red' : ''}">JONES E REVERSIE</button>
+                            ${course.pars[h-1] === 3 ? `<button onclick="tapTrash(this, ${i}, 'greenie')" class="trash-btn col-span-2 ${existing.greenie ? 'active' : ''}">GREENIE</button><button onclick="tapTrash(this, ${i}, 'reversie')" class="trash-btn col-span-2 ${existing.reversie ? 'active-red' : ''}">REVERSIE</button>` : ''}
                         </div>
                     </div>`;
             });
             document.getElementById('score-modal').style.display = 'flex';
-            document.getElementById('mod-gross-0').focus();
         }
 
-        function tapTrash(btn, pIdx, type, label, isRed = false) {
+        function tapTrash(btn, pIdx, type) {
             currentModalState[pIdx][type] = !currentModalState[pIdx][type];
-            btn.classList.toggle('active', currentModalState[pIdx][type] && !isRed);
-            btn.classList.toggle('active-red', currentModalState[pIdx][type] && isRed);
-            if(currentModalState[pIdx][type]) showToast(label, isRed);
+            btn.classList.toggle('active', currentModalState[pIdx][type] && !btn.className.includes('red'));
+            btn.classList.toggle('active-red', currentModalState[pIdx][type] && (type.includes('reversie') || type.includes('3P')));
         }
 
         function closeModal() {
@@ -235,90 +216,101 @@
             buildTable();
         }
 
-        function triggerMK() {
-            let res = prompt("MK Outcome?\n1: Birdie (+$5)\n2: Par (+$2)\n3: Bogey (+$1 to Opp)");
-            if(['1','2','3'].includes(res)) mk_results[activeHole] = res;
-            localStorage.setItem('golf_mk', JSON.stringify(mk_results));
-            closeModal();
-        }
-
         function calculateEverything() {
             let t1_t = 0, t2_t = 0, logH = '', jpP = 0, tStr = [0, 0];
-            function log(h, l, a, tI) { logH = `<div class="log-row"><span>H${h} - ${l}</span><span class="${tI < 2 ? 'text-emerald-400':'text-amber-400'}">+$${a}</span></div>` + logH; tI < 2 ? t1_t += a : t2_t += a; }
             for(let i=1; i<=18; i++) { if(document.getElementById(`badge-${i}`)) document.getElementById(`badge-${i}`).innerHTML = ''; }
 
             for(let h=1; h<=18; h++) {
                 let r = true, gS = [], nS = [], par = course.pars[h-1];
                 for(let i=0; i<4; i++) { let d = holeData[h]?.[i] || {}; if(d.gross === '' || d.gross === undefined) { r = false; break; } gS[i] = parseInt(d.gross); nS[i] = gS[i] - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
-                if(mk_results[h]) { if(mk_results[h] === '1') log(h, "Moose Birdie", 5, 0); if(mk_results[h] === '2') log(h, "Moose Par", 2, 0); if(mk_results[h] === '3') log(h, "Moose Challenger", 1, 2); }
+                if(mk_results[h]) { if(mk_results[h] === '1') t1_t += 5; if(mk_results[h] === '2') t1_t += 2; if(mk_results[h] === '3') t2_t += 1; }
                 if(r) {
                     let t1H = false, t2H = false, t1BC = 0, t2BC = 0;
                     for(let i=0; i<4; i++) {
                         let d = holeData[h][i];
-                        if(gS[i] === par - 1 && !mk_results[h]) { log(h, `${roster.players[i].name} Birdie`, 1, i); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
-                        if(gS[i] <= par - 2) { log(h, `${roster.players[i].name} Eagle`, 10, i); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
-                        if(d.sandie) { log(h, `${roster.players[i].name} Sandie`, 1, i); if(i<2) t1H=true; else t2H=true; }
-                        if(d.jSingle) log(h, `${roster.players[i].name} Jones Birdie`, 3, i);
-                        if(d.jDouble) log(h, `${roster.players[i].name} Jones Eagle`, 5, i);
-                        if(d.j3P) log(h, `${roster.players[i].name} Jones 3P`, 1, i < 2 ? 2 : 0);
-                        if(d.jReversie) log(h, `${roster.players[i].name} Jones E Reversie`, 5, i < 2 ? 2 : 0);
-                        if(d.greenie) { log(h, `${roster.players[i].name} Greenie`, 1, i); if(i<2) t1H=true; else t2H=true; }
-                        if(d.reversie) { log(h, `${roster.players[i].name} Reversie`, 1, i < 2 ? 2 : 0); if(i<2) t2H=true; else t1H=true; }
+                        if(gS[i] === par - 1 && !mk_results[h]) { t1_t += (i<2?1:0); t2_t += (i>=2?1:0); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
+                        if(gS[i] <= par - 2) { t1_t += (i<2?10:0); t2_t += (i>=2?10:0); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
+                        if(d.sandie) { t1_t += (i<2?1:0); t2_t += (i>=2?1:0); if(i<2) t1H=true; else t2H=true; }
+                        if(d.jSingle) { t1_t += (i<2?3:0); t2_t += (i>=2?3:0); }
+                        if(d.jDouble) { t1_t += (i<2?5:0); t2_t += (i>=2?5:0); }
+                        if(d.j3P) { t1_t += (i<2?0:1); t2_t += (i>=2?0:1); }
+                        if(d.jReversie) { t1_t += (i<2?0:5); t2_t += (i>=2?0:5); }
+                        if(d.greenie) { t1_t += (i<2?1:0); t2_t += (i>=2?1:0); if(i<2) t1H=true; else t2H=true; }
+                        if(d.reversie) { t1_t += (i<2?0:1); t2_t += (i>=2?0:1); if(i<2) t2H=true; else t1H=true; }
                     }
-                    if(t1BC === 2 && !mk_results[h]) log(h, `${roster.t1} DOUBLE DOUG`, 8, 0);
-                    if(t2BC === 2 && !mk_results[h]) log(h, `${roster.t2} DOUBLE DOUG`, 8, 2);
-                    if(t1H) tStr[0]++; else tStr[0] = 0; if(tStr[0] === 3) { log(h, `TURKEY: ${roster.t1}`, 5, 0); tStr[0] = 0; }
-                    if(t2H) tStr[1]++; else tStr[1] = 0; if(tStr[1] === 3) { log(h, `TURKEY: ${roster.t2}`, 5, 2); tStr[1] = 0; }
+                    if(t1BC === 2 && !mk_results[h]) t1_t += 8;
+                    if(t2BC === 2 && !mk_results[h]) t2_t += 8;
+                    if(t1H) tStr[0]++; else tStr[0] = 0; if(tStr[0] === 3) { t1_t += 5; tStr[0] = 0; }
+                    if(t2H) tStr[1]++; else tStr[1] = 0; if(tStr[1] === 3) { t2_t += 5; tStr[1] = 0; }
                     let same = gS.every(v => v === gS[0]), bP = gS.every(v => v >= par + 1), dP = gS.every(v => v >= par + 2), hJP = 0;
                     if(same) hJP += 2; if(dP) hJP += 10; else if(bP) hJP += 5; jpP += hJP;
                     let t1N = Math.min(nS[0], nS[1]), t2N = Math.min(nS[2], nS[3]);
-                    if(t1N < t2N && jpP > 0) { log(h, `${roster.t1} WIN POT`, jpP, 0); jpP = 0; }
-                    else if(t2N < t1N && jpP > 0) { log(h, `${roster.t2} WIN POT`, jpP, 2); jpP = 0; }
+                    if(t1N < t2N && jpP > 0) { t1_t += jpP; jpP = 0; }
+                    else if(t2N < t1N && jpP > 0) { t2_t += jpP; jpP = 0; }
                     else if(jpP > 0 && h < 18) { let bT = dP ? "PF" : (bP ? "JF" : "JP"); document.getElementById(`badge-${h+1}`).innerHTML = `<div class="jp-badge">${bT} $${jpP}</div>`; }
                 }
             }
-            document.getElementById('log-content').innerHTML = logH || 'No trash yet.';
             
-            // NASSAU SPLIT LOGIC
-            let mH = [
-                { start: 1, end: 9, name: 'Front 9' },
-                { start: 10, end: 18, name: 'Back 9' },
-                { start: 1, end: 18, name: 'Total 18' }
-            ]; 
-            Object.keys(presses).forEach(h => mH.push({ start: parseInt(h), end: 18, name: `Press H${h}` }));
-            
+            let anyoneTrailing = false;
             let totalMD = 0;
-            const mS = mH.map(m => {
-                let d = 0;
+            const tbody = document.getElementById('match-tbody'); tbody.innerHTML = '';
+
+            activeBets.forEach(m => {
+                let diff = 0;
                 for(let h=m.start; h<=m.end; h++) {
-                    let r = true, ns = [];
-                    for(let i=0; i<4; i++) { let d = holeData[h]?.[i]; if(!d || d.gross === '') { r = false; break; } ns[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
-                    if(r) { let aB = Math.min(ns[0], ns[1]), bB = Math.min(ns[2], ns[3]); if(aB < bB) d++; else if(bB < aB) d--; }
+                    let ready = true, ns = [];
+                    for(let i=0; i<4; i++) { let d = holeData[h]?.[i]; if(!d || d.gross === '') { ready = false; break; } ns[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
+                    if(ready) { let aB = Math.min(ns[0], ns[1]), bB = Math.min(ns[2], ns[3]); if(aB < bB) diff++; else if(bB < aB) diff--; }
                 }
-                totalMD += (d * roster.nassauVal);
-                return { name: m.name, diff: d };
-            });
-            
-            document.getElementById('match-list').innerHTML = '';
-            let anyoneDown = false;
-            mS.forEach(m => {
-                if(m.diff !== 0) anyoneDown = true;
-                let s = m.diff === 0 ? "AS" : (m.diff > 0 ? `${roster.t1} +${m.diff}` : `${roster.t2} +${Math.abs(m.diff)}`);
-                document.getElementById('match-list').innerHTML += `<div class="flex justify-between items-center"><span class="font-bold">${m.name}</span><span class="font-mono text-emerald-400 bg-slate-800 px-2 py-0.5 rounded">${s}</span></div>`;
+                totalMD += (diff * roster.nassauVal);
+                if(diff !== 0) anyoneTrailing = true;
+                let sText = diff === 0 ? "AS" : (diff > 0 ? `${roster.t1} +${diff}` : `${roster.t2} +${Math.abs(diff)}`);
+                tbody.innerHTML += `<tr><td>${m.name}</td><td class="bet-status text-emerald-400">${sText}</td></tr>`;
             });
 
-            document.getElementById('t1-trash-sub').innerText = `Trash: $${t1_t}`;
-            document.getElementById('t2-trash-sub').innerText = `Trash: $${t2_t}`;
             document.getElementById('t1-final').innerText = `${roster.t1}: $${t1_t + totalMD}`;
             document.getElementById('t2-final').innerText = `${roster.t2}: $${t2_t - totalMD}`;
-            document.getElementById('press-btn').classList.toggle('hidden', !anyoneDown);
+            document.getElementById('press-btn').classList.toggle('hidden', !anyoneTrailing);
         }
 
         function openPressMenu() {
-            let next = activeHole + 1; if(next > 18) return;
-            let type = prompt(`PRESS ON HOLE ${next}?\n1: Single Match\n2: Double Stake`);
-            if(type === '1') presses[next] = 'single'; if(type === '2') presses[next] = 'double';
-            localStorage.setItem('golf_presses', JSON.stringify(presses)); buildTable();
+            let next = activeHole + 1;
+            if(next > 18) return alert("Round complete.");
+            
+            // Logic check: Which bets are we down on?
+            let f9_last = [...activeBets].filter(b => b.type === 'f9').pop();
+            let overall_last = [...activeBets].filter(b => b.id === '18' || b.type === 'press18').pop();
+            
+            let statusF9 = getMatchDiff(f9_last);
+            let status18 = getMatchDiff(overall_last);
+
+            let options = [];
+            if(activeHole < 9 && statusF9 !== 0) options.push("1: Single Press Front (New F9 Match)");
+            if(activeHole < 9 && statusF9 !== 0) options.push("2: Double Press Front (New F9 + New 18 Match)");
+            if(activeHole >= 9 && status18 !== 0) options.push("3: Press Remaining (New Match to 18)");
+
+            if(options.length === 0) return alert("Cannot press: No trailing bets.");
+            
+            let choice = prompt(`PRESS STARTING HOLE ${next}:\n${options.join('\n')}`);
+            if(choice === '1') activeBets.push({ id: Date.now(), name: `P-Front H${next}`, start: next, end: 9, type: 'f9' });
+            if(choice === '2') {
+                activeBets.push({ id: Date.now()+'a', name: `P-Front H${next}`, start: next, end: 9, type: 'f9' });
+                activeBets.push({ id: Date.now()+'b', name: `P-Total H${next}`, start: next, end: 18, type: 'press18' });
+            }
+            if(choice === '3') activeBets.push({ id: Date.now(), name: `Press H${next}`, start: next, end: 18, type: 'press18' });
+
+            localStorage.setItem('golf_bets', JSON.stringify(activeBets));
+            buildTable();
+        }
+
+        function getMatchDiff(m) {
+            let diff = 0;
+            for(let h=m.start; h<=m.end; h++) {
+                let ready = true, ns = [];
+                for(let i=0; i<4; i++) { let d = holeData[h]?.[i]; if(!d || d.gross === '') { ready = false; break; } ns[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
+                if(ready) { let aB = Math.min(ns[0], ns[1]), bB = Math.min(ns[2], ns[3]); if(aB < bB) diff++; else if(bB < aB) d--; }
+            }
+            return diff;
         }
 
         function clearAllData() { if(confirm("Start fresh?")) { localStorage.clear(); location.reload(); } }
