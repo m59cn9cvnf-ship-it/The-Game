@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME</title>
+    <title>THE GAME: Pro Ledger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
@@ -14,11 +14,8 @@
         .sticky-col { position: sticky; left: 0; background: #1e293b; z-index: 10; min-width: 110px; text-align: left; border-right: 2px solid #475569; }
         .score-cell { height: 55px; background: #0f172a; font-weight: bold; font-size: 1.2rem; }
         .stroke-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #fbbf24; border-radius: 50%; }
-        
-        /* Fixed Press Visuals */
         .press-single { border-left: 5px solid #10b981 !important; }
         .press-double { border-left: 10px double #10b981 !important; }
-
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
@@ -36,11 +33,11 @@
         <section id="setup" class="card mb-4">
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <input type="text" id="t1-name-in" placeholder="Team 1 Name" class="bg-slate-900 p-2 rounded w-full text-xs mb-2 border border-slate-700">
+                    <input type="text" id="t1-name-in" placeholder="Team 1" class="bg-slate-900 p-2 rounded w-full text-xs mb-2 border border-slate-700">
                     <div class="space-y-1" id="t1-players"></div>
                 </div>
                 <div>
-                    <input type="text" id="t2-name-in" placeholder="Team 2 Name" class="bg-slate-900 p-2 rounded w-full text-xs mb-2 border border-slate-700">
+                    <input type="text" id="t2-name-in" placeholder="Team 2" class="bg-slate-900 p-2 rounded w-full text-xs mb-2 border border-slate-700">
                     <div class="space-y-1" id="t2-players"></div>
                 </div>
             </div>
@@ -61,23 +58,28 @@
             </table>
         </div>
 
-        <div class="card bg-slate-900 border-emerald-500/30 flex justify-between items-center sticky bottom-2 shadow-2xl">
-            <div class="text-xs space-y-1">
-                <div id="nassau-val" class="text-emerald-400 font-bold text-lg">AS</div>
-                <div id="trash-vals" class="text-slate-400 font-mono text-[10px]">T1: $0 | T2: $0</div>
+        <div class="card bg-slate-900 border-emerald-500/30 sticky bottom-2 shadow-2xl overflow-hidden">
+            <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Live Betting Ledger</div>
+                <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-3 py-1 rounded text-[9px] font-black uppercase">Add Press</button>
             </div>
-            <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-6 py-3 rounded-xl font-black text-xs shadow-lg shadow-red-900/40">PRESS</button>
+            <div id="match-list" class="space-y-1 mb-3">
+                </div>
+            <div id="trash-summary" class="grid grid-cols-2 gap-2 text-[11px] font-mono border-t border-slate-800 pt-2">
+                <div id="t1-trash" class="text-emerald-400">T1 Trash: $0</div>
+                <div id="t2-trash" class="text-amber-400 text-right">T2 Trash: $0</div>
+            </div>
         </div>
     </div>
 
     <div id="score-modal" class="modal">
-        <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-xs border border-slate-700">
-            <div id="modal-title" class="text-center mb-4 font-bold text-emerald-400 text-lg">Hole Entry</div>
-            <div id="mk-container" class="hidden mb-6">
-                <button id="mk-btn" onclick="triggerMK()" class="w-full py-3 rounded-lg border-2 border-slate-600 bg-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-300">Challenge Moose Knuckle</button>
+        <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-xs border border-slate-700 shadow-2xl">
+            <div id="modal-title" class="text-center mb-2 font-bold text-emerald-400 text-lg uppercase tracking-tight">Hole Entry</div>
+            <div id="mk-container" class="hidden mb-4">
+                <button id="mk-btn" onclick="triggerMK()" class="w-full py-2 rounded-lg border border-slate-600 bg-slate-700 text-[9px] font-black uppercase text-slate-300">Moose Knuckle</button>
             </div>
             <div class="space-y-4" id="modal-inputs"></div>
-            <button onclick="closeModal()" class="w-full mt-6 bg-emerald-600 py-4 rounded-xl font-bold uppercase tracking-tight">Save & Close</button>
+            <button onclick="closeModal()" class="w-full mt-6 bg-emerald-600 py-4 rounded-xl font-bold uppercase">Save Hole</button>
         </div>
     </div>
 
@@ -90,24 +92,21 @@
         let scores = JSON.parse(localStorage.getItem('golf_scores')) || {};
         let presses = JSON.parse(localStorage.getItem('golf_presses')) || {}; 
         let mk_results = JSON.parse(localStorage.getItem('golf_mk')) || {}; 
-        let totals = { t1_trash: 0, t2_trash: 0, nassau: 0 };
-        let activeHole = null;
+        let activeHole = 1;
 
         function init() {
             const hRow = document.getElementById('header-row');
             const pRow = document.getElementById('par-row');
             const t1Div = document.getElementById('t1-players');
             const t2Div = document.getElementById('t2-players');
-            
             for(let i=1; i<=18; i++) {
                 hRow.innerHTML += `<th id="h-head-${i}">${i}</th>`;
-                pRow.innerHTML += `<td id="p-head-${i}">${course.pars[i-1]}<br><span class="opacity-40">${course.hcp[i-1]}</span></td>`;
+                pRow.innerHTML += `<td id="p-head-${i}">${course.pars[i-1]}<br><span class="opacity-30">${course.hcp[i-1]}</span></td>`;
             }
-
             for(let i=0; i<4; i++) {
                 const target = i < 2 ? t1Div : t2Div;
                 target.innerHTML += `
-                <input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="Player ${i+1}" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700">
+                <input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="Player ${i+1}" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700 mb-1">
                 <input type="number" id="p-i-${i}" value="${roster.players?.[i]?.idx || ''}" placeholder="Idx" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700 mb-2">`;
             }
             if(roster.players?.length > 0) buildTable();
@@ -119,7 +118,7 @@
                 let n = document.getElementById(`p-n-${i}`).value || `P${i+1}`;
                 let idx = parseFloat(document.getElementById(`p-i-${i}`).value) || 0;
                 let ch = Math.round((idx * (121 / 113)) + (70.1 - 71));
-                roster.players.push({ name: n, idx, ch });
+                roster.players.push({ name: n, ch });
             }
             localStorage.setItem('golf_roster', JSON.stringify(roster));
             buildTable();
@@ -130,23 +129,21 @@
             const tbody = document.getElementById('player-rows');
             tbody.innerHTML = '';
             roster.players.forEach((p, pIdx) => {
-                let row = `<tr><td class="sticky-col"><div class="text-[9px] font-bold text-emerald-500 uppercase">${pIdx < 2 ? roster.t1 : roster.t2}</div><div class="text-xs font-bold">${p.name}</div></td>`;
+                let row = `<tr><td class="sticky-col"><div class="text-[8px] font-bold text-slate-500 uppercase">${pIdx < 2 ? roster.t1 : roster.t2}</div><div class="text-xs font-bold">${p.name}</div></td>`;
                 for(let h=1; h<=18; h++) {
-                    const score = scores[`${pIdx}_${h}`] || '';
-                    const pressClass = presses[h] === 'double' ? 'press-double' : (presses[h] === 'single' ? 'press-single' : '');
-                    const isScore = score !== '';
-                    row += `<td class="score-cell ${pressClass} ${isScore ? 'bg-emerald-900/20' : ''}" onclick="openModal(${h})">
-                                <span>${score}</span>
+                    const s = scores[`${pIdx}_${h}`] || '';
+                    const pCls = presses[h] ? (presses[h] === 'double' ? 'press-double' : 'press-single') : '';
+                    row += `<td class="score-cell ${pCls} ${s!==''?'bg-emerald-900/10':''}" onclick="openModal(${h})">
+                                <span>${s}</span>
                                 ${p.ch >= course.hcp[h-1] ? '<div class="stroke-dot"></div>' : ''}
                             </td>`;
                 }
                 tbody.innerHTML += row + '</tr>';
             });
-            
             for(let h=1; h<=18; h++) {
-                const cls = presses[h] === 'double' ? 'press-double' : (presses[h] === 'single' ? 'press-single' : '');
-                document.getElementById(`h-head-${h}`).className = `hole-header ${cls}`;
-                document.getElementById(`p-head-${h}`).className = `par-row ${cls}`;
+                const pCls = presses[h] ? (presses[h] === 'double' ? 'press-double' : 'press-single') : '';
+                document.getElementById(`h-head-${h}`).className = pCls;
+                document.getElementById(`p-head-${h}`).className = pCls;
             }
             calculateEverything();
         }
@@ -155,23 +152,12 @@
             activeHole = h;
             document.getElementById('modal-title').innerText = `HOLE ${h}`;
             document.getElementById('mk-container').classList.toggle('hidden', course.pars[h-1] !== 3);
-            
-            // Highlight MK button if already set
-            const mkBtn = document.getElementById('mk-btn');
-            if(mk_results[h]) {
-                mkBtn.innerText = "MK RECORDED";
-                mkBtn.classList.replace('bg-slate-700', 'bg-emerald-700');
-            } else {
-                mkBtn.innerText = "CHALLENGE MOOSE KNUCKLE";
-                mkBtn.classList.replace('bg-emerald-700', 'bg-slate-700');
-            }
-
             const inputArea = document.getElementById('modal-inputs');
             inputArea.innerHTML = '';
             roster.players.forEach((p, i) => {
                 inputArea.innerHTML += `
                     <div class="flex justify-between items-center">
-                        <label class="text-[10px] text-slate-400 uppercase">${p.name}</label>
+                        <label class="text-[10px] text-slate-400 uppercase font-bold">${p.name}</label>
                         <input type="number" id="mod-in-${i}" inputmode="numeric" value="${scores[`${i}_${h}`] || ''}" class="bg-slate-900 border border-slate-600 p-3 rounded-lg w-20 text-center font-bold text-xl" oninput="if(this.value.length >= 1 && ${i < 3}) document.getElementById('mod-in-${i+1}').focus()">
                     </div>`;
             });
@@ -180,11 +166,10 @@
         }
 
         function triggerMK() {
-            let res = prompt("MK Outcome?\n1: Birdie (+$5 Team A)\n2: Par (+$2 Team A)\n3: Bogey (+$1 Team B)\n4: Clear MK Result");
-            if(res === '4') delete mk_results[activeHole];
-            else if(['1','2','3'].includes(res)) mk_results[activeHole] = res;
+            let res = prompt("MK Outcome?\n1: Birdie (+$5)\n2: Par (+$2)\n3: Bogey (+$1 to Opp)");
+            if(['1','2','3'].includes(res)) mk_results[activeHole] = res;
             localStorage.setItem('golf_mk', JSON.stringify(mk_results));
-            openModal(activeHole); // Refresh UI
+            closeModal();
         }
 
         function closeModal() {
@@ -197,54 +182,89 @@
             buildTable();
         }
 
-        function openPressMenu() {
-            if(!activeHole || activeHole >= 18) return alert("Cannot press after Hole 18.");
-            
-            let nextHole = activeHole + 1;
-            let type = prompt(`START PRESS ON HOLE ${nextHole}?\n1: Single (Solid Green Line)\n2: Double (Double Green Line)\n3: Delete press starting on Hole ${nextHole}`);
-            
-            if(type === '1') presses[nextHole] = 'single';
-            else if(type === '2') presses[nextHole] = 'double';
-            else if(type === '3') delete presses[nextHole];
-            
-            localStorage.setItem('golf_presses', JSON.stringify(presses));
-            buildTable();
-        }
-
         function calculateEverything() {
-            totals = { t1_trash: 0, t2_trash: 0, nassau: 0 };
+            let t1_t = 0, t2_t = 0;
+            let streaks = [0,0,0,0]; // Turkey tracker
+
+            // 1. Calculate Matches (Original + Presses)
+            let matchHistory = [{ start: 1, name: 'Original' }];
+            Object.keys(presses).forEach(h => matchHistory.push({ start: parseInt(h), name: `Press H${h}` }));
+
+            const matchStatus = matchHistory.map(m => {
+                let diff = 0;
+                for(let h=m.start; h<=18; h++) {
+                    let nets = [];
+                    let ready = true;
+                    for(let i=0; i<4; i++) {
+                        let g = scores[`${i}_${h}`];
+                        if(g === '' || g === undefined) { ready = false; break; }
+                        nets[i] = g - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
+                    }
+                    if(ready) {
+                        let t1Best = Math.min(nets[0], nets[1]);
+                        let t2Best = Math.min(nets[2], nets[3]);
+                        if(t1Best < t2Best) diff++;
+                        else if(t2Best < t1Best) diff--;
+                    }
+                }
+                return { name: m.name, diff: diff };
+            });
+
+            // 2. Trash Calculation (Turkey & Jackpots)
             for(let h=1; h<=18; h++) {
-                let nets = [];
-                let ready = true;
-                
-                // Add MK Results to Trash
-                if(mk_results[h] === '1') totals.t1_trash += 5;
-                if(mk_results[h] === '2') totals.t1_trash += 2;
-                if(mk_results[h] === '3') totals.t2_trash += 1;
+                if(mk_results[h] === '1') t1_t += 5;
+                if(mk_results[h] === '2') t1_t += 2;
+                if(mk_results[h] === '3') t2_t += 1;
 
                 for(let i=0; i<4; i++) {
                     let g = scores[`${i}_${h}`];
-                    if(g === '' || g === undefined) { ready = false; continue; }
-                    nets[i] = g - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
-                    if(g === course.pars[h-1] - 1) i < 2 ? totals.t1_trash += 1 : totals.t2_trash += 1;
-                    if(g === 1) i < 2 ? totals.t1_trash += 100 : totals.t2_trash += 100;
-                }
-                if(ready) {
-                    let t1Net = Math.min(nets[0], nets[1]);
-                    let t2Net = Math.min(nets[2], nets[3]);
-                    if(t1Net < t2Net) totals.nassau += 1;
-                    if(t2Net < t1Net) totals.nassau -= 1;
+                    if(!g) { streaks[i] = 0; continue; }
+                    let par = course.pars[h-1];
+                    
+                    // Turkey Logic (3 consecutive birdies, MK doesn't count)
+                    if(g === par - 1 && !mk_results[h]) {
+                        streaks[i]++;
+                        if(streaks[i] === 3) {
+                            alert(`${roster.players[i].name} TURKEY! +$5`);
+                            i < 2 ? t1_t += 5 : t2_t += 5;
+                            streaks[i] = 0; // Reset after payout
+                        }
+                    } else {
+                        streaks[i] = 0;
+                    }
+
+                    // Jackpot Logic
+                    if(g === par - 1) i < 2 ? t1_t += 2 : t2_t += 2; // Birdie = $2 Jackpot
+                    if(g <= par - 2) { // Eagle+ = $10 Jackpot Phil
+                        alert(`${roster.players[i].name} JACKPOT PHIL! +$10`);
+                        i < 2 ? t1_t += 10 : t2_t += 10;
+                    }
+                    if(g === 1) i < 2 ? t1_t += 100 : t2_t += 100; // Hole in one
                 }
             }
-            updateUI();
+            updateLedger(matchStatus, t1_t, t2_t);
         }
 
-        function updateUI() {
-            document.getElementById('trash-vals').innerText = `${roster.t1}: $${totals.t1_trash} | ${roster.t2}: $${totals.t2_trash}`;
-            let n = totals.nassau;
-            let team = n > 0 ? roster.t1 : roster.t2;
-            document.getElementById('nassau-val').innerText = n === 0 ? "AS" : `${team} +${Math.abs(n)}`;
-            document.getElementById('press-btn').classList.toggle('hidden', n === 0);
+        function updateLedger(matches, t1, t2) {
+            const mList = document.getElementById('match-list');
+            mList.innerHTML = '';
+            matches.forEach(m => {
+                let status = m.diff === 0 ? "AS" : (m.diff > 0 ? `${roster.t1} +${m.diff}` : `${roster.t2} +${Math.abs(m.diff)}`);
+                mList.innerHTML += `<div class="flex justify-between text-xs font-bold"><span>${m.name}</span><span class="text-emerald-400">${status}</span></div>`;
+            });
+            document.getElementById('t1-trash').innerText = `${roster.t1} Trash: $${t1}`;
+            document.getElementById('t2-trash').innerText = `${roster.t2} Trash: $${t2}`;
+            document.getElementById('press-btn').classList.toggle('hidden', matches[0].diff === 0);
+        }
+
+        function openPressMenu() {
+            let next = activeHole + 1;
+            if(next > 18) return;
+            let type = prompt(`NEW PRESS ON HOLE ${next}?\n1: Single\n2: Double`);
+            if(type === '1') presses[next] = 'single';
+            if(type === '2') presses[next] = 'double';
+            localStorage.setItem('golf_presses', JSON.stringify(presses));
+            buildTable();
         }
 
         function clearAllData() { if(confirm("Start fresh?")) { localStorage.clear(); location.reload(); } }
