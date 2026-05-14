@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: Final Settle</title>
+    <title>THE GAME: v5.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
@@ -13,13 +13,13 @@
         th, td { border: 1px solid #334155; padding: 12px 10px; text-align: center; min-width: 60px; position: relative; }
         .sticky-col { position: sticky; left: 0; background: #1e293b; z-index: 10; min-width: 110px; text-align: left; border-right: 2px solid #475569; }
         .score-cell { height: 55px; background: #0f172a; font-weight: bold; font-size: 1.2rem; }
+        .stat-col { background: #1e293b; font-weight: 800; color: #10b981; min-width: 50px; }
         .stroke-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #fbbf24; border-radius: 50%; }
+        .jp-badge { font-size: 7px; font-weight: 900; padding: 1px 3px; border-radius: 3px; background: #ef4444; color: white; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 5; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 10px; }
-        .trash-btn { background: #334155; border: 1px solid #475569; border-radius: 6px; padding: 8px 4px; font-size: 8px; font-weight: 900; color: #94a3b8; line-height: 1; }
+        .trash-btn { background: #334155; border: 1px solid #475569; border-radius: 6px; padding: 8px 4px; font-size: 8px; font-weight: 900; color: #94a3b8; line-height: 1.2; }
         .trash-btn.active { background: #10b981; border-color: #34d399; color: white; box-shadow: 0 0 10px rgba(16,185,129,0.3); }
         .trash-btn.active-red { background: #ef4444; border-color: #f87171; color: white; }
-        
-        /* Notification Toast */
         #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 900; font-size: 12px; z-index: 200; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.2); pointer-events: none; }
     </style>
 </head>
@@ -48,7 +48,7 @@
         </section>
 
         <div class="table-container mb-4 shadow-2xl">
-            <table id="score-table">
+            <table>
                 <thead>
                     <tr id="header-row" class="bg-slate-800 text-slate-400 text-[11px]"><th class="sticky-col">HOLE</th></tr>
                     <tr id="par-row" class="bg-slate-900 text-slate-500 text-[10px]"><th class="sticky-col text-[8px]">PAR/HCP</th></tr>
@@ -59,16 +59,22 @@
 
         <div class="card bg-slate-900 border-emerald-500/30 sticky bottom-2 shadow-2xl">
             <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
-                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Live Ledger</div>
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Live Betting Ledger</div>
                 <div class="flex gap-2">
                     <button onclick="document.getElementById('log-modal').style.display='flex'" class="bg-slate-800 px-3 py-1 rounded text-[9px] font-bold uppercase border border-slate-700">Trash Log</button>
                     <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-3 py-1 rounded text-[9px] font-black uppercase">Add Press</button>
                 </div>
             </div>
-            <div id="match-list" class="space-y-1 mb-3 text-xs"></div>
-            <div class="grid grid-cols-2 gap-2 text-[14px] font-black border-t border-slate-800 pt-1 uppercase italic">
-                <div id="t1-total" class="text-emerald-400">T1: $0</div>
-                <div id="t2-total" class="text-amber-400 text-right">T2: $0</div>
+            <div id="match-list" class="space-y-1 mb-2 text-xs"></div>
+            
+            <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-500 border-t border-slate-800 pt-2 uppercase">
+                <div id="t1-trash-sub">T1 Trash: $0</div>
+                <div id="t2-trash-sub" class="text-right">T2 Trash: $0</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 text-[15px] font-black pt-1 uppercase italic">
+                <div id="t1-final" class="text-emerald-400">T1 Total: $0</div>
+                <div id="t2-final" class="text-amber-400 text-right">T2 Total: $0</div>
             </div>
         </div>
     </div>
@@ -77,7 +83,6 @@
         <div class="bg-slate-800 p-4 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl overflow-y-auto max-h-[95vh]">
             <div class="flex justify-between items-center mb-4">
                 <div id="modal-title" class="font-black text-emerald-400 text-lg uppercase tracking-tight">Hole Entry</div>
-                <div id="streak-indicator" class="text-[9px] font-bold bg-slate-900 px-3 py-1 rounded-full text-slate-400 border border-slate-700">STREAK: 0</div>
             </div>
             
             <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-2 rounded-lg border border-slate-600 bg-slate-700 text-[10px] font-black uppercase text-slate-300">Moose Knuckle</button></div>
@@ -242,6 +247,7 @@
             let t1_t = 0, t2_t = 0, logH = '', jpP = 0, tStr = [0, 0];
             function log(h, l, a, tI) { logH = `<div class="log-row"><span>H${h} - ${l}</span><span class="${tI < 2 ? 'text-emerald-400':'text-amber-400'}">+$${a}</span></div>` + logH; tI < 2 ? t1_t += a : t2_t += a; }
             for(let i=1; i<=18; i++) { if(document.getElementById(`badge-${i}`)) document.getElementById(`badge-${i}`).innerHTML = ''; }
+
             for(let h=1; h<=18; h++) {
                 let r = true, gS = [], nS = [], par = course.pars[h-1];
                 for(let i=0; i<4; i++) { let d = holeData[h]?.[i] || {}; if(d.gross === '' || d.gross === undefined) { r = false; break; } gS[i] = parseInt(d.gross); nS[i] = gS[i] - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
@@ -273,6 +279,7 @@
                 }
             }
             document.getElementById('log-content').innerHTML = logH || 'No trash yet.';
+            
             let mH = [{ start: 1, name: 'Original' }]; Object.keys(presses).forEach(h => mH.push({ start: parseInt(h), name: `Press H${h}` }));
             let totalMD = 0;
             const mS = mH.map(m => {
@@ -285,13 +292,17 @@
                 totalMD += (d * roster.nassauVal);
                 return { name: m.name, diff: d };
             });
+            
             document.getElementById('match-list').innerHTML = '';
             mS.forEach(m => {
                 let s = m.diff === 0 ? "AS" : (m.diff > 0 ? `${roster.t1} +${m.diff}` : `${roster.t2} +${Math.abs(m.diff)}`);
                 document.getElementById('match-list').innerHTML += `<div class="flex justify-between text-[10px] font-bold"><span>${m.name}</span><span class="text-emerald-400">${s}</span></div>`;
             });
-            document.getElementById('t1-total').innerText = `${roster.t1}: $${t1_t + totalMD}`;
-            document.getElementById('t2-total').innerText = `${roster.t2}: $${t2_t - totalMD}`;
+
+            document.getElementById('t1-trash-sub').innerText = `${roster.t1} Trash: $${t1_t}`;
+            document.getElementById('t2-trash-sub').innerText = `${roster.t2} Trash: $${t2_t}`;
+            document.getElementById('t1-final').innerText = `${roster.t1}: $${t1_t + totalMD}`;
+            document.getElementById('t2-final').innerText = `${roster.t2}: $${t2_t - totalMD}`;
             document.getElementById('press-btn').classList.toggle('hidden', mS.every(m => m.diff === 0));
         }
 
