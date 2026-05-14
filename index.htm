@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: v4.1</title>
+    <title>THE GAME: Course Ready</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
         .card { background: #1e293b; border-radius: 12px; padding: 12px; border-bottom: 3px solid #334155; }
         .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
         table { border-collapse: collapse; width: 100%; white-space: nowrap; }
-        th, td { border: 1px solid #334155; padding: 10px; text-align: center; min-width: 55px; position: relative; }
+        th, td { border: 1px solid #334155; padding: 10px; text-align: center; min-width: 58px; position: relative; }
         .sticky-col { position: sticky; left: 0; background: #1e293b; z-index: 10; min-width: 110px; text-align: left; border-right: 2px solid #475569; }
         .score-cell { height: 55px; background: #0f172a; font-weight: bold; font-size: 1.2rem; }
         .stroke-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #fbbf24; border-radius: 50%; }
-        .press-single { border-left: 5px solid #10b981 !important; }
-        .press-double { border-left: 10px double #10b981 !important; }
+        .jp-badge { font-size: 8px; font-weight: 900; padding: 2px 4px; border-radius: 4px; background: #ef4444; color: white; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
-        .log-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #334155; font-size: 0.75rem; }
     </style>
 </head>
 <body class="p-2">
@@ -32,17 +30,25 @@
         </header>
 
         <section id="setup" class="card mb-4">
+            <h2 class="text-[10px] font-bold text-slate-500 uppercase mb-2">1. Teams</h2>
             <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <input type="text" id="t1-name-in" placeholder="Team 1" class="bg-slate-900 p-2 rounded w-full text-xs mb-2 border border-slate-700">
-                    <div class="space-y-1" id="t1-players"></div>
-                </div>
-                <div>
-                    <input type="text" id="t2-name-in" placeholder="Team 2" class="bg-slate-900 p-2 rounded w-full text-xs mb-2 border border-slate-700">
-                    <div class="space-y-1" id="t2-players"></div>
-                </div>
+                <div class="space-y-1"><input type="text" id="t1-name-in" placeholder="Team 1 Name" class="bg-slate-900 p-2 rounded w-full text-xs border border-slate-700"><div id="t1-players"></div></div>
+                <div class="space-y-1"><input type="text" id="t2-name-in" placeholder="Team 2 Name" class="bg-slate-900 p-2 rounded w-full text-xs border border-slate-700"><div id="t2-players"></div></div>
             </div>
-            <button onclick="saveRoster()" class="w-full bg-emerald-600 py-3 rounded-xl font-bold uppercase text-xs">Lock In Roster</button>
+            
+            <h2 class="text-[10px] font-bold text-slate-500 uppercase mb-2">2. Course Config</h2>
+            <div class="grid grid-cols-3 gap-2 mb-2">
+                <input type="text" id="course-name" placeholder="Course Name" class="bg-slate-900 p-2 rounded text-xs border border-slate-700 col-span-3">
+                <input type="number" id="course-rating" placeholder="Rating" class="bg-slate-900 p-2 rounded text-xs border border-slate-700">
+                <input type="number" id="course-slope" placeholder="Slope" class="bg-slate-900 p-2 rounded text-xs border border-slate-700">
+                <input type="number" id="course-par" placeholder="Total Par" class="bg-slate-900 p-2 rounded text-xs border border-slate-700">
+            </div>
+            <div class="space-y-2 mb-4">
+                <input type="text" id="course-pars-list" placeholder="Pars (Comma separated: 4,4,3...)" class="bg-slate-900 p-2 rounded w-full text-xs border border-slate-700">
+                <input type="text" id="course-hcp-list" placeholder="HCPs (Comma separated: 1,13,11...)" class="bg-slate-900 p-2 rounded w-full text-xs border border-slate-700">
+            </div>
+
+            <button onclick="saveEverything()" class="w-full bg-emerald-600 py-3 rounded-xl font-bold uppercase text-xs">Save & Lock Game</button>
         </section>
 
         <div class="table-container mb-4 shadow-2xl">
@@ -61,7 +67,7 @@
 
         <div class="card bg-slate-900 border-emerald-500/30 sticky bottom-2 shadow-2xl overflow-hidden">
             <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
-                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Live Betting Ledger</div>
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Live Ledger</div>
                 <div class="flex gap-2">
                     <button onclick="document.getElementById('log-modal').style.display='flex'" class="bg-slate-800 px-3 py-1 rounded text-[9px] font-bold uppercase border border-slate-700">Trash Log</button>
                     <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-3 py-1 rounded text-[9px] font-black uppercase">Add Press</button>
@@ -77,10 +83,8 @@
 
     <div id="score-modal" class="modal">
         <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-xs border border-slate-700 shadow-2xl">
-            <div id="modal-title" class="text-center mb-2 font-bold text-emerald-400 text-lg uppercase tracking-tight">Hole Entry</div>
-            <div id="mk-container" class="hidden mb-4">
-                <button id="mk-btn" onclick="triggerMK()" class="w-full py-2 rounded-lg border border-slate-600 bg-slate-700 text-[9px] font-black uppercase text-slate-300">Moose Knuckle</button>
-            </div>
+            <div id="modal-title" class="text-center mb-2 font-bold text-emerald-400 text-lg uppercase">Hole Entry</div>
+            <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-2 rounded-lg border border-slate-600 bg-slate-700 text-[9px] font-black uppercase text-slate-300">Moose Knuckle</button></div>
             <div class="space-y-4" id="modal-inputs"></div>
             <button onclick="closeModal()" class="w-full mt-6 bg-emerald-600 py-4 rounded-xl font-bold uppercase">Save Hole</button>
         </div>
@@ -89,15 +93,16 @@
     <div id="log-modal" class="modal">
         <div class="bg-slate-900 p-6 rounded-2xl w-full max-w-sm border border-slate-700 max-h-[80vh] flex flex-col">
             <h2 class="text-center font-black text-emerald-500 uppercase mb-4 tracking-tighter">Trash History</h2>
-            <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2"></div>
+            <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2 text-xs"></div>
             <button onclick="document.getElementById('log-modal').style.display='none'" class="w-full bg-slate-700 py-3 rounded-xl font-bold uppercase text-xs">Close Log</button>
         </div>
     </div>
 
     <script>
-        const course = {
+        let course = JSON.parse(localStorage.getItem('golf_course')) || {
+            name: "Logan River", rating: 70.1, slope: 121, par: 71,
             pars: [4,4,3,4,4,3,4,4,4,4,4,3,4,4,3,4,5,4],
-            hcp: [1, 13, 11, 7, 3, 15, 17, 5, 9, 2, 12, 16, 10, 4, 18, 14, 6, 8]
+            hcp: [1,13,11,7,3,15,17,5,9,2,12,16,10,4,18,14,6,8]
         };
         let roster = JSON.parse(localStorage.getItem('golf_roster')) || { t1: "Team 1", t2: "Team 2", players: [] };
         let scores = JSON.parse(localStorage.getItem('golf_scores')) || {};
@@ -106,44 +111,68 @@
         let activeHole = 1;
 
         function init() {
-            const hRow = document.getElementById('header-row');
-            const pRow = document.getElementById('par-row');
+            // Fill Course Inputs
+            document.getElementById('course-name').value = course.name;
+            document.getElementById('course-rating').value = course.rating;
+            document.getElementById('course-slope').value = course.slope;
+            document.getElementById('course-par').value = course.par;
+            document.getElementById('course-pars-list').value = course.pars.join(',');
+            document.getElementById('course-hcp-list').value = course.hcp.join(',');
+
             const t1Div = document.getElementById('t1-players');
             const t2Div = document.getElementById('t2-players');
-            for(let i=1; i<=18; i++) {
-                hRow.innerHTML += `<th id="h-head-${i}">${i}</th>`;
-                pRow.innerHTML += `<td id="p-head-${i}">${course.pars[i-1]}<br><span class="opacity-30">${course.hcp[i-1]}</span></td>`;
-            }
+            t1Div.innerHTML = ''; t2Div.innerHTML = '';
             for(let i=0; i<4; i++) {
                 const target = i < 2 ? t1Div : t2Div;
                 target.innerHTML += `
-                <input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="P${i+1}" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700 mb-1">
+                <input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="Name" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700 mb-1">
                 <input type="number" id="p-i-${i}" value="${roster.players?.[i]?.idx || ''}" placeholder="Idx" class="bg-slate-800 p-2 rounded w-full text-white text-[10px] border border-slate-700 mb-2">`;
             }
             if(roster.players?.length > 0) buildTable();
         }
 
-        function saveRoster() {
+        function saveEverything() {
+            // Save Course
+            course = {
+                name: document.getElementById('course-name').value,
+                rating: parseFloat(document.getElementById('course-rating').value),
+                slope: parseInt(document.getElementById('course-slope').value),
+                par: parseInt(document.getElementById('course-par').value),
+                pars: document.getElementById('course-pars-list').value.split(',').map(Number),
+                hcp: document.getElementById('course-hcp-list').value.split(',').map(Number)
+            };
+            localStorage.setItem('golf_course', JSON.stringify(course));
+
+            // Save Roster
             roster = { t1: document.getElementById('t1-name-in').value || "Team 1", t2: document.getElementById('t2-name-in').value || "Team 2", players: [] };
             for(let i=0; i<4; i++) {
                 let n = document.getElementById(`p-n-${i}`).value || `P${i+1}`;
                 let idx = parseFloat(document.getElementById(`p-i-${i}`).value) || 0;
-                let ch = Math.round((idx * (121 / 113)) + (70.1 - 71));
+                let ch = Math.round((idx * (course.slope / 113)) + (course.rating - course.par));
                 roster.players.push({ name: n, ch });
             }
             localStorage.setItem('golf_roster', JSON.stringify(roster));
-            buildTable();
-            document.getElementById('setup').classList.add('hidden');
+            location.reload(); // Hard refresh to rebuild entire grid
         }
 
         function buildTable() {
+            const hRow = document.getElementById('header-row');
+            const pRow = document.getElementById('par-row');
+            hRow.innerHTML = '<th class="sticky-col">HOLE</th>';
+            pRow.innerHTML = '<th class="sticky-col text-[8px]">PAR/HCP</th>';
+            
+            for(let i=1; i<=18; i++) {
+                hRow.innerHTML += `<th id="h-head-${i}">${i}<div id="badge-${i}"></div></th>`;
+                pRow.innerHTML += `<td id="p-head-${i}">${course.pars[i-1]}<br><span class="opacity-30">${course.hcp[i-1]}</span></td>`;
+            }
+
             const tbody = document.getElementById('player-rows');
             tbody.innerHTML = '';
             roster.players.forEach((p, pIdx) => {
                 let row = `<tr><td class="sticky-col"><div class="text-[8px] font-bold text-slate-500 uppercase">${pIdx < 2 ? roster.t1 : roster.t2}</div><div class="text-xs font-bold">${p.name}</div></td>`;
                 for(let h=1; h<=18; h++) {
                     const s = scores[`${pIdx}_${h}`] || '';
-                    const pCls = presses[h] ? (presses[h] === 'double' ? 'press-double' : 'press-single') : '';
+                    const pCls = presses[h] ? (presses[h] === 'double' ? 'border-l-[10px] border-double border-emerald-500' : 'border-l-[5px] border-emerald-500') : '';
                     row += `<td class="score-cell ${pCls} ${s!==''?'bg-emerald-900/10':''}" onclick="openModal(${h})">
                                 <span>${s}</span>
                                 ${p.ch >= course.hcp[h-1] ? '<div class="stroke-dot"></div>' : ''}
@@ -151,11 +180,6 @@
                 }
                 tbody.innerHTML += row + '</tr>';
             });
-            for(let h=1; h<=18; h++) {
-                const pCls = presses[h] ? (presses[h] === 'double' ? 'press-double' : 'press-single') : '';
-                document.getElementById(`h-head-${h}`).className = pCls;
-                document.getElementById(`p-head-${h}`).className = pCls;
-            }
             calculateEverything();
         }
 
@@ -194,19 +218,17 @@
         }
 
         function calculateEverything() {
-            let t1_trash = 0, t2_trash = 0, logHtml = '';
+            let t1_t = 0, t2_t = 0, logHtml = '', jackpotPool = 0;
             let teamStreaks = [0, 0];
-            let jackpotPool = 0;
 
             function log(hole, label, amt, tIdx) {
                 logHtml = `<div class="log-row"><span>H${hole} - ${label}</span><span class="${tIdx < 2 ? 'text-emerald-400':'text-amber-400'}">+$${amt}</span></div>` + logHtml;
-                tIdx < 2 ? t1_trash += amt : t2_trash += amt;
+                tIdx < 2 ? t1_t += amt : t2_t += amt;
             }
 
             for(let h=1; h<=18; h++) {
                 let ready = true, gS = [], nS = [];
                 let par = course.pars[h-1];
-
                 for(let i=0; i<4; i++) {
                     let g = scores[`${i}_${h}`];
                     if(g === '' || g === undefined) { ready = false; break; }
@@ -214,68 +236,57 @@
                     nS[i] = g - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
                 }
 
-                // MOOSE KNUCKLE (Fixed payouts)
                 if(mk_results[h]) {
                     if(mk_results[h] === '1') log(h, "Moose Birdie", 5, 0);
                     if(mk_results[h] === '2') log(h, "Moose Par", 2, 0);
                     if(mk_results[h] === '3') log(h, "Moose Challenger", 1, 2);
                 }
 
-                // TRASH & TEAM TRACKERS
                 if(ready) {
-                    let t1_birdied = false, t2_birdied = false;
-                    let t1_birdie_count = 0, t2_birdie_count = 0;
-
-                    // INDIVIDUAL GROSS BIRDIE/EAGLE/ACE
+                    let t1B = false, t2B = false, t1BC = 0, t2BC = 0;
                     for(let i=0; i<4; i++) {
                         let g = gS[i];
                         if(g === par - 1 && !mk_results[h]) {
                             log(h, `${roster.players[i].name} Birdie`, 1, i);
-                            if(i < 2) { t1_birdied = true; t1_birdie_count++; } 
-                            else { t2_birdied = true; t2_birdie_count++; }
+                            if(i < 2) { t1B = true; t1BC++; } else { t2B = true; t2BC++; }
                         }
                         if(g <= par - 2 && g > 1) {
                             log(h, `${roster.players[i].name} Eagle`, 10, i);
-                            if(i < 2) { t1_birdied = true; t1_birdie_count++; } 
-                            else { t2_birdied = true; t2_birdie_count++; }
+                            if(i < 2) { t1B = true; t1BC++; } else { t2B = true; t2BC++; }
                         }
-                        if(g === 1) log(h, `${roster.players[i].name} ACE!`, 100, i);
+                    }
+                    if(t1BC === 2 && !mk_results[h]) log(h, `${roster.t1} DOUBLE DOUG`, 8, 0);
+                    if(t2BC === 2 && !mk_results[h]) log(h, `${roster.t2} DOUBLE DOUG`, 8, 2);
+
+                    if(t1B) teamStreaks[0]++; else teamStreaks[0] = 0;
+                    if(teamStreaks[0] === 3) { log(h, `${roster.t1} TURKEY`, 5, 0); teamStreaks[0] = 0; }
+                    if(t2B) teamStreaks[1]++; else teamStreaks[1] = 0;
+                    if(teamStreaks[1] === 3) { log(h, `${roster.t2} TURKEY`, 5, 2); teamStreaks[1] = 0; }
+
+                    // JACKPOTS
+                    let same = gS.every(v => v === gS[0]);
+                    let bogeyP = gS.every(v => v >= par + 1);
+                    let doubleP = gS.every(v => v >= par + 2);
+                    let hJP = 0;
+                    if(same) hJP += 2;
+                    if(doubleP) hJP += 10; else if(bogeyP) hJP += 5;
+
+                    jackpotPool += hJP;
+                    
+                    // Display Badge on NEXT hole if pool > 0
+                    if(jackpotPool > 0 && h < 18) {
+                        let badgeText = doubleP ? "PF" : (bogeyP ? "JF" : "JP");
+                        document.getElementById(`badge-${h+1}`).innerHTML = `<div class="jp-badge">${badgeText} $${jackpotPool}</div>`;
                     }
 
-                    // DOUBLE DOUG ($8 STACK)
-                    if(t1_birdie_count === 2 && !mk_results[h]) log(h, `Team ${roster.t1} DOUBLE DOUG`, 8, 0);
-                    if(t2_birdie_count === 2 && !mk_results[h]) log(h, `Team ${roster.t2} DOUBLE DOUG`, 8, 2);
-
-                    // TEAM TURKEY ($5 STREAK)
-                    if(t1_birdied) {
-                        teamStreaks[0]++;
-                        if(teamStreaks[0] === 3) { log(h, `Team ${roster.t1} TURKEY`, 5, 0); teamStreaks[0] = 0; }
-                    } else teamStreaks[0] = 0;
-
-                    if(t2_birdied) {
-                        teamStreaks[1]++;
-                        if(teamStreaks[1] === 3) { log(h, `Team ${roster.t2} TURKEY`, 5, 2); teamStreaks[1] = 0; }
-                    } else teamStreaks[1] = 0;
-
-                    // MISERY JACKPOTS (POOL)
-                    let hPool = 0;
-                    let allSame = gS.every(v => v === gS[0]);
-                    let allBogeyPlus = gS.every(v => v >= par + 1);
-                    let allDoublePlus = gS.every(v => v >= par + 2);
-
-                    if (allSame) hPool += 2; 
-                    if (allDoublePlus) hPool += 10; 
-                    else if (allBogeyPlus) hPool += 5; 
-                    
-                    jackpotPool += hPool;
                     let t1N = Math.min(nS[0], nS[1]), t2N = Math.min(nS[2], nS[3]);
-                    if(t1N < t2N && jackpotPool > 0) { log(h, `${roster.t1} WIN JACKPOT`, jackpotPool, 0); jackpotPool = 0; }
-                    else if(t2N < t1N && jackpotPool > 0) { log(h, `${roster.t2} WIN JACKPOT`, jackpotPool, 2); jackpotPool = 0; }
+                    if(t1N < t2N && jackpotPool > 0) { log(h, `${roster.t1} CLEANED POOL`, jackpotPool, 0); jackpotPool = 0; }
+                    else if(t2N < t1N && jackpotPool > 0) { log(h, `${roster.t2} CLEANED POOL`, jackpotPool, 2); jackpotPool = 0; }
                 }
             }
-            document.getElementById('log-content').innerHTML = logHtml || '<div class="text-center text-slate-600 text-xs mt-10">No trash yet.</div>';
+            document.getElementById('log-content').innerHTML = logHtml || 'No trash yet.';
             
-            // RE-CALC NASSAU
+            // MATCHES
             let matchHistory = [{ start: 1, name: 'Original' }];
             Object.keys(presses).forEach(h => matchHistory.push({ start: parseInt(h), name: `Press H${h}` }));
             const mStat = matchHistory.map(m => {
@@ -294,24 +305,22 @@
                 }
                 return { name: m.name, diff: d };
             });
-            
-            document.getElementById('match-list').innerHTML = '';
+            const mList = document.getElementById('match-list'); mList.innerHTML = '';
             let anyoneDown = false;
             mStat.forEach(m => {
                 if(m.diff !== 0) anyoneDown = true;
                 let s = m.diff === 0 ? "AS" : (m.diff > 0 ? `${roster.t1} +${m.diff}` : `${roster.t2} +${Math.abs(m.diff)}`);
-                document.getElementById('match-list').innerHTML += `<div class="flex justify-between text-xs font-bold"><span>${m.name}</span><span class="text-emerald-400">${s}</span></div>`;
+                mList.innerHTML += `<div class="flex justify-between text-xs font-bold"><span>${m.name}</span><span class="text-emerald-400">${s}</span></div>`;
             });
-            
-            document.getElementById('t1-trash').innerText = `${roster.t1}: $${t1_trash}`;
-            document.getElementById('t2-trash').innerText = `${roster.t2}: $${t2_trash}`;
+            document.getElementById('t1-trash').innerText = `${roster.t1}: $${t1_t}`;
+            document.getElementById('t2-trash').innerText = `${roster.t2}: $${t2_t}`;
             document.getElementById('press-btn').classList.toggle('hidden', !anyoneDown);
         }
 
         function openPressMenu() {
             let next = activeHole + 1;
-            if(next > 18) return alert("Hole 18 complete.");
-            let type = prompt(`PRESS ON HOLE ${next}?\n1: Single Match\n2: Double Current Stake`);
+            if(next > 18) return;
+            let type = prompt(`PRESS ON HOLE ${next}?\n1: Single Match\n2: Double Stake`);
             if(type === '1') presses[next] = 'single';
             if(type === '2') presses[next] = 'double';
             localStorage.setItem('golf_presses', JSON.stringify(presses));
