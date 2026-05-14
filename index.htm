@@ -3,65 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME</title>
+    <title>THE GAME: Scorecard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; }
-        .card { background: #1e293b; border-radius: 12px; padding: 16px; border-bottom: 3px solid #334155; }
-        /* 2x2 Dot Grid Style */
-        .dot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; width: 14px; height: 14px; }
-        .dot { width: 5px; height: 5px; border-radius: 50%; background: #fbbf24; opacity: 0; }
-        .dot.active { opacity: 1; }
-        .score-entered { background-color: #064e3b !important; border-color: #10b981 !important; }
+        body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
+        .card { background: #1e293b; border-radius: 12px; padding: 12px; border-bottom: 3px solid #334155; }
+        
+        /* Table Styles */
+        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+        table { border-collapse: collapse; width: 100%; white-space: nowrap; }
+        th, td { border: 1px solid #334155; padding: 8px; text-align: center; min-width: 50px; }
+        
+        /* Sticky First Column */
+        .sticky-col { position: sticky; left: 0; background: #1e293b; z-index: 10; min-width: 100px; text-align: left; font-weight: bold; border-right: 2px solid #475569; }
+        
+        /* Score Cell */
+        .score-cell { position: relative; height: 45px; background: #0f172a; cursor: pointer; font-weight: bold; font-size: 1.1rem; }
+        .stroke-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; background: #fbbf24; border-radius: 50%; }
+        .par-row { background: #1e293b; color: #94a3b8; font-size: 0.75rem; }
+        .hole-header { background: #334155; color: #cbd5e1; font-weight: 800; }
     </style>
 </head>
-<body class="p-4">
+<body class="p-2">
 
-    <div id="app" class="max-w-md mx-auto">
-        <header class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-black italic tracking-tighter text-emerald-400">THE GAME</h1>
-            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-xs bg-slate-800 px-3 py-2 rounded-full border border-slate-700 uppercase font-bold">Setup</button>
+    <div id="app" class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-4 px-2">
+            <h1 class="text-xl font-black italic text-emerald-400">THE GAME</h1>
+            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-[10px] bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 uppercase font-bold">Setup</button>
         </header>
 
-        <section id="setup" class="card mb-6">
-            <h2 class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest text-center">Team 1 vs Team 2</h2>
+        <section id="setup" class="card mb-4">
             <div class="space-y-2 mb-4">
-                <div class="flex gap-2"><input type="text" id="p0-n" placeholder="P1 Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm text-white"><input type="number" id="p0-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm text-white"></div>
-                <div class="flex gap-2"><input type="text" id="p1-n" placeholder="P2 Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm text-white"><input type="number" id="p1-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm text-white"></div>
-                <div class="flex gap-2"><input type="text" id="p2-n" placeholder="P3 Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm text-white"><input type="number" id="p2-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm text-white"></div>
-                <div class="flex gap-2"><input type="text" id="p3-n" placeholder="P4 Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm text-white"><input type="number" id="p3-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm text-white"></div>
+                <div class="flex gap-2"><input type="text" id="p0-n" placeholder="Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm"><input type="number" id="p0-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm"></div>
+                <div class="flex gap-2"><input type="text" id="p1-n" placeholder="Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm"><input type="number" id="p1-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm"></div>
+                <div class="flex gap-2"><input type="text" id="p2-n" placeholder="Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm"><input type="number" id="p2-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm"></div>
+                <div class="flex gap-2"><input type="text" id="p3-n" placeholder="Name" class="bg-slate-700 p-2 rounded w-2/3 text-sm"><input type="number" id="p3-i" placeholder="Idx" class="bg-slate-700 p-2 rounded w-1/3 text-sm"></div>
             </div>
-            <button onclick="saveRoster()" class="w-full bg-emerald-600 py-3 rounded-xl font-bold uppercase text-sm">Lock In Players</button>
+            <button onclick="saveRoster()" class="w-full bg-emerald-600 py-3 rounded-xl font-bold uppercase text-xs">Lock In Roster</button>
         </section>
 
-        <main id="game-ui">
-            <div id="grid" class="grid grid-cols-6 gap-2 mb-6"></div>
-            
-            <div class="card bg-emerald-950/30 border-emerald-500/50">
-                <div class="space-y-4">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nassau</h3>
-                            <div id="nassau-status" class="text-2xl font-mono text-emerald-400">All Square</div>
-                        </div>
-                        <div id="press-area" class="hidden">
-                            <button onclick="callPress()" class="bg-red-600 px-4 py-2 rounded-lg font-black text-xs animate-pulse">PRESS NOW</button>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 pt-2 border-t border-emerald-900">
-                        <div>
-                            <h3 id="t1-label" class="text-[10px] font-bold text-slate-500 uppercase">Team 1 Trash</h3>
-                            <div id="t1-money" class="text-lg font-mono">$0</div>
-                        </div>
-                        <div>
-                            <h3 id="t2-label" class="text-[10px] font-bold text-slate-500 uppercase">Team 2 Trash</h3>
-                            <div id="t2-money" class="text-lg font-mono">$0</div>
-                        </div>
-                    </div>
-                </div>
+        <div class="table-container mb-4">
+            <table id="scorecard-table">
+                <thead>
+                    <tr id="header-row" class="hole-header">
+                        <th class="sticky-col">HOLE</th>
+                        </tr>
+                    <tr id="par-row" class="par-row">
+                        <th class="sticky-col text-[10px]">PAR</th>
+                        </tr>
+                </thead>
+                <tbody id="player-rows">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="card bg-slate-900 border-emerald-500/30 flex justify-between items-center">
+            <div id="stats-summary" class="text-xs space-y-1">
+                <div id="nassau-val" class="text-emerald-400 font-bold text-lg">Nassau: All Square</div>
+                <div id="trash-vals" class="text-slate-400 font-mono">T1: $0 | T2: $0</div>
             </div>
-        </main>
+            <button id="press-btn" onclick="callPress()" class="hidden bg-red-600 px-4 py-3 rounded-lg font-black text-xs animate-pulse">PRESS</button>
+        </div>
     </div>
 
     <script>
@@ -69,95 +71,89 @@
             pars: [4,4,3,4,4,3,4,4,4,4,4,3,4,4,3,4,5,4],
             hcp: [1, 13, 11, 7, 3, 15, 17, 5, 9, 2, 12, 16, 10, 4, 18, 14, 6, 8]
         };
-
         let roster = [];
-        let totals = { t1_money: 0, t2_money: 0, nassau: 0, presses: [] };
+        let totals = { t1: 0, t2: 0, nassau: 0 };
+        let scores = {}; // { playerIdx_holeNum: score }
 
         function init() {
-            const gDiv = document.getElementById('grid');
-            gDiv.innerHTML = '';
+            const hRow = document.getElementById('header-row');
+            const pRow = document.getElementById('par-row');
             for(let i=1; i<=18; i++) {
-                const isP3 = course.pars[i-1] === 3;
-                gDiv.innerHTML += `
-                    <button id="hole-${i}" onclick="scoreHole(${i}, ${isP3})" class="bg-slate-800 h-20 rounded-lg border border-slate-700 flex flex-col items-center justify-between py-2 relative">
-                        <span class="text-[10px] text-slate-500 font-bold">${i}</span>
-                        <div id="dots-${i}" class="dot-grid">
-                            <div class="dot" id="h${i}-p0"></div><div class="dot" id="h${i}-p1"></div>
-                            <div class="dot" id="h${i}-p2"></div><div class="dot" id="h${i}-p3"></div>
-                        </div>
-                        ${isP3 ? '<div class="absolute bottom-1 right-1 w-2 h-2 bg-emerald-500 rounded-full"></div>' : ''}
-                    </button>`;
+                hRow.innerHTML += `<th>${i}</th>`;
+                pRow.innerHTML += `<td>${course.pars[i-1]}</td>`;
             }
         }
 
         function saveRoster() {
             roster = [];
+            const tbody = document.getElementById('player-rows');
+            tbody.innerHTML = '';
+            
             for(let i=0; i<4; i++) {
                 let name = document.getElementById(`p${i}-n`).value || `P${i+1}`;
                 let idx = parseFloat(document.getElementById(`p${i}-i`).value) || 0;
-                let ch = Math.round((idx * (121 / 113)) + (70.1 - 71)); // Logan River Math
+                let ch = Math.round((idx * (121 / 113)) + (70.1 - 71));
                 roster.push({ name, ch });
+
+                let rowHtml = `<tr id="p-row-${i}"><td class="sticky-col text-xs uppercase">${name}<br><span class="text-[9px] text-slate-500 font-normal">CH: ${ch}</span></td>`;
+                for(let h=1; h<=18; h++) {
+                    const hasStroke = ch >= course.hcp[h-1];
+                    rowHtml += `<td class="score-cell" onclick="enterScore(${i}, ${h})">
+                                    <span id="score-${i}-${h}"></span>
+                                    ${hasStroke ? '<div class="stroke-dot"></div>' : ''}
+                                </td>`;
+                }
+                rowHtml += '</tr>';
+                tbody.innerHTML += rowHtml;
             }
-            document.getElementById('t1-label').innerText = roster[0].name + "/" + roster[1].name;
-            document.getElementById('t2-label').innerText = roster[2].name + "/" + roster[3].name;
-            applyDots();
             document.getElementById('setup').classList.add('hidden');
         }
 
-        function applyDots() {
-            for(let h=1; h<=18; h++) {
-                roster.forEach((p, pIdx) => {
-                    const dotEl = document.getElementById(`h${h}-p${pIdx}`);
-                    if (p.ch >= course.hcp[h-1]) dotEl.classList.add('active');
-                    // Note: This logic assumes 1 dot max for now. If index > 18, we can add a color change later.
-                });
+        function enterScore(pIdx, holeNum) {
+            const isP3 = course.pars[holeNum-1] === 3;
+            if(isP3 && pIdx === 0 && confirm("Moose Knuckle Challenged?")) {
+                let res = prompt("1:Birdie(+5 T1), 2:Par(+2 T1), 3:Bogey(+1 T2)");
+                if(res === '1') totals.t1 += 5;
+                if(res === '2') totals.t1 += 2;
+                if(res === '3') totals.t2 += 1;
+            }
+
+            let val = prompt(`Gross Score for ${roster[pIdx].name}:`);
+            if(val) {
+                scores[`${pIdx}_${holeNum}`] = parseInt(val);
+                document.getElementById(`score-${pIdx}-${holeNum}`).innerText = val;
+                calculateHole(holeNum);
             }
         }
 
-        function scoreHole(n, isP3) {
-            if(roster.length < 4) return alert("Run Setup first!");
+        function calculateHole(h) {
             let nets = [];
-
-            if(isP3 && confirm("Moose Knuckle?")) {
-                let res = prompt("1:Birdie(+$5 T1), 2:Par(+$2 T1), 3:Bogey(+$1 T2)");
-                if(res === '1') totals.t1_money += 5;
-                if(res === '2') totals.t1_money += 2;
-                if(res === '3') totals.t2_money += 1;
+            for(let i=0; i<4; i++) {
+                let gross = scores[`${i}_${h}`];
+                if(!gross) return; // Wait for all 4
+                let strokes = roster[i].ch >= course.hcp[h-1] ? 1 : 0;
+                nets[i] = gross - strokes;
+                
+                // Trash
+                if(gross === course.pars[h-1] - 1) i < 2 ? totals.t1 += 1 : totals.t2 += 1;
             }
 
-            roster.forEach((p, i) => {
-                let dotText = p.ch >= course.hcp[n-1] ? " (1 Stroke)" : " (No Stroke)";
-                let gross = parseInt(prompt(`${p.name}${dotText} Score:`)) || 0;
-                nets[i] = gross - (p.ch >= course.hcp[n-1] ? 1 : 0);
-                // Trash
-                if(gross === course.pars[n-1] - 1) i < 2 ? totals.t1_money += 1 : totals.t2_money += 1;
-            });
-
-            let t1_best = Math.min(nets[0], nets[1]);
-            let t2_best = Math.min(nets[2], nets[3]);
-            if(t1_best < t2_best) totals.nassau += 1;
-            if(t2_best < t1_best) totals.nassau -= 1;
-
-            document.getElementById(`hole-${n}`).classList.add('score-entered');
+            let t1Net = Math.min(nets[0], nets[1]);
+            let t2Net = Math.min(nets[2], nets[3]);
+            if(t1Net < t2Net) totals.nassau += 1;
+            if(t2Net < t1Net) totals.nassau -= 1;
             updateUI();
         }
 
-        function callPress() {
-            alert("A new Press match has been started from this hole!");
-            // Logic to track multiple press lines will be in v2.9
-        }
-
         function updateUI() {
-            document.getElementById('t1-money').innerText = `$${totals.t1_money}`;
-            document.getElementById('t2-money').innerText = `$${totals.t2_money}`;
-            
+            document.getElementById('t1-money').innerText = `$${totals.t1}`; // Wait, fixed logic below
+            document.getElementById('trash-vals').innerText = `T1: $${totals.t1} | T2: $${totals.t2}`;
             let n = totals.nassau;
-            document.getElementById('nassau-status').innerText = n > 0 ? `T1 +${n}` : (n < 0 ? `T2 +${Math.abs(n)}` : "All Square");
-            
-            // Show Press button if the Nassau is not All Square
-            document.getElementById('press-area').classList.toggle('hidden', n === 0);
+            document.getElementById('nassau-val').innerText = n > 0 ? `Nassau: T1 +${n}` : (n < 0 ? `Nassau: T2 +${Math.abs(n)}` : "Nassau: AS");
+            document.getElementById('press-btn').classList.toggle('hidden', n === 0);
         }
 
+        function callPress() { alert("Press Added!"); }
         window.onload = init;
     </script>
 </body>
