@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: v8.9</title>
+    <title>THE GAME: v9.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -25,7 +25,7 @@
         .trash-btn.active-red { background: #ef4444; border-color: #f87171; color: white; }
         input, select { background: #0f172a !important; color: white !important; border: 1px solid #334155 !important; }
         #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 900; font-size: 14px; z-index: 200; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); pointer-events: none; }
-        .log-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #334155; font-size: 11px; }
+        .log-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #334155; font-size: 13px; }
     </style>
 </head>
 <body class="p-2">
@@ -42,12 +42,12 @@
         </header>
 
         <section id="setup" class="card mb-4 hidden">
-            <div class="mb-6"><h2 class="text-[11px] font-black text-blue-400 uppercase mb-2 tracking-widest italic">1. Cloud Sync</h2><input type="text" id="game-id-in" placeholder="E.G. LOGAN1" class="p-3 rounded-xl w-full text-sm font-mono uppercase"></div>
+            <div class="mb-6"><h2 class="text-[11px] font-black text-blue-400 uppercase mb-2 tracking-widest italic">1. Cloud Sync Code</h2><input type="text" id="game-id-in" placeholder="E.G. LOGAN1" class="p-3 rounded-xl w-full text-sm font-mono uppercase"></div>
             <div class="mb-6">
                 <h2 class="text-[11px] font-black text-amber-400 uppercase mb-2 tracking-widest italic">2. Rosters & Indexes</h2>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-3"><input type="text" id="t1-name-in" placeholder="Team A Name" class="p-2 rounded w-full text-xs font-bold border-emerald-500/20"><div id="t1-players" class="space-y-3"></div></div>
-                    <div class="space-y-3"><input type="text" id="t2-name-in" placeholder="Team B Name" class="p-2 rounded w-full text-xs font-bold border-amber-500/20"><div id="t2-players" class="space-y-3"></div></div>
+                    <div class="space-y-3"><input type="text" id="t1-name-in" placeholder="Team A" class="p-2 rounded w-full text-xs font-bold border-emerald-500/20"><div id="t1-players" class="space-y-3"></div></div>
+                    <div class="space-y-3"><input type="text" id="t2-name-in" placeholder="Team B" class="p-2 rounded w-full text-xs font-bold border-amber-500/20"><div id="t2-players" class="space-y-3"></div></div>
                 </div>
             </div>
             <div class="mb-6">
@@ -64,13 +64,13 @@
 
         <div class="card bg-slate-950 border-emerald-500/40 sticky bottom-2 shadow-2xl">
             <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
-                <div class="text-[12px] font-black text-emerald-400 uppercase tracking-widest italic">Nassau Ledger</div>
+                <div class="text-[12px] font-black text-emerald-500 uppercase tracking-widest italic">Nassau Ledger</div>
                 <div class="flex gap-2">
                     <button onclick="document.getElementById('log-modal').style.display='flex'" class="bg-slate-800 px-3 py-2 rounded-lg text-[11px] font-bold uppercase border border-slate-700">Trash Log</button>
                     <button id="press-btn" onclick="openPressMenu()" class="bg-red-600 px-4 py-2 rounded-lg text-[11px] font-black uppercase shadow-lg">Press</button>
                 </div>
             </div>
-            <div id="match-list" class="space-y-1 mb-3 text-xs"></div>
+            <div id="match-list" class="space-y-1.5 mb-3"></div>
             <div class="grid grid-cols-2 gap-4 text-[22px] font-black border-t border-slate-800 pt-2 uppercase italic">
                 <div id="t1-final" class="text-emerald-400">T1: $0</div>
                 <div id="t2-final" class="text-amber-400 text-right">T2: $0</div>
@@ -81,16 +81,16 @@
     <div id="score-modal" class="modal">
         <div class="bg-slate-800 p-5 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl overflow-y-auto max-h-[95vh]">
             <div id="modal-title" class="font-black text-emerald-400 text-2xl uppercase mb-5 text-center">Hole Entry</div>
-            <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-3 rounded-xl border border-slate-600 bg-slate-700 text-[11px] font-black uppercase text-slate-300">Moose Knuckle</button></div>
+            <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-3 rounded-xl border border-slate-600 bg-slate-700 text-[11px] font-black uppercase text-slate-300">Moose Knuckle Trigger</button></div>
             <div class="space-y-4" id="modal-inputs-area"></div>
-            <button onclick="closeModal()" class="w-full mt-8 bg-emerald-600 py-6 rounded-2xl font-black uppercase tracking-widest shadow-xl text-xl">Save & Sync</button>
+            <button onclick="closeModal()" class="w-full mt-8 bg-emerald-600 py-6 rounded-2xl font-black uppercase tracking-widest shadow-xl text-xl">Save Hole</button>
         </div>
     </div>
 
     <div id="log-modal" class="modal">
         <div class="bg-slate-900 p-6 rounded-2xl w-full max-w-sm border border-slate-700 max-h-[80vh] flex flex-col">
             <h2 class="text-center font-black text-emerald-500 uppercase mb-4 tracking-tighter">Trash History</h2>
-            <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2 text-[10px]"></div>
+            <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2"></div>
             <button onclick="document.getElementById('log-modal').style.display='none'" class="w-full bg-slate-700 py-4 rounded-2xl font-bold uppercase text-xs">Close</button>
         </div>
     </div>
@@ -121,7 +121,6 @@
             document.getElementById('course-name').value = course.name; document.getElementById('course-rating').value = course.rating;
             document.getElementById('course-slope').value = course.slope; document.getElementById('course-par').value = course.par;
             document.getElementById('course-pars-list').value = course.pars.join(','); document.getElementById('course-hcp-list').value = course.hcp.join(',');
-            
             const t1Div = document.getElementById('t1-players'); const t2Div = document.getElementById('t2-players');
             t1Div.innerHTML = ''; t2Div.innerHTML = '';
             for(let i=0; i<4; i++) {
@@ -133,7 +132,7 @@
             if(roster.gameID) { db.ref('games/' + roster.gameID).on('value', (snap) => { const d = snap.val(); if(d) { holeData = d.holeData || {}; activeBets = d.activeBets || activeBets; mk_results = d.mk_results || {}; buildTable(); } }); }
         }
 
-        function handleNewRound() { const c = prompt("New Round?\n1: Save & Clear\n2: Reset/Delete\n3: Cancel"); if(c==='1'){let h=JSON.parse(localStorage.getItem('golf_history'))||[];h.push({d:new Date().toLocaleDateString(),roster,course,holeData});localStorage.setItem('golf_history',JSON.stringify(h));finalizeReset();}else if(c==='2')finalizeReset(); }
+        function handleNewRound() { const c = prompt("New Round?\n1: Save & Clear\n2: Delete/Reset\n3: Cancel"); if(c==='1'){let h=JSON.parse(localStorage.getItem('golf_history'))||[];h.push({d:new Date().toLocaleDateString(),roster,course,holeData});localStorage.setItem('golf_history',JSON.stringify(h));finalizeReset();}else if(c==='2')finalizeReset(); }
         function finalizeReset() { holeData = {}; mk_results = {}; activeBets = [{id:'f9',name:'Front 9 (F9)',start:1,end:9,type:'f9'},{id:'b9',name:'Back 9 (B9)',start:10,end:18,type:'b9'},{id:'18',name:'Total 18 (T18)',start:1,end:18,type:'18'}]; localStorage.setItem('golf_holedata',JSON.stringify(holeData)); localStorage.setItem('golf_mk',JSON.stringify(mk_results)); localStorage.setItem('golf_bets',JSON.stringify(activeBets)); location.reload(); }
 
         function loadSavedCourse(n) { const c=courseDir.find(x=>x.name===n); if(c){document.getElementById('course-name').value=c.name;document.getElementById('course-rating').value=c.rating;document.getElementById('course-slope').value=c.slope;document.getElementById('course-par').value=c.par;document.getElementById('course-pars-list').value=c.pars.join(',');document.getElementById('course-hcp-list').value=c.hcp.join(',');} }
@@ -187,10 +186,10 @@
         function calculateEverything() {
             let t1_t=0, t2_t=0, logH='', jpP=0, tStr=[0,0];
             function log(h,l,a,tI){ logH=`<div class="log-row"><span>H${h} - ${l}</span><span class="${tI<2?'text-emerald-400':'text-amber-400'}">+$${a}</span></div>`+logH; tI<2?t1_t+=a:t2_t+=a; }
-            for(let i=1;i<=18;i++){if(document.getElementById(`badge-${i}`))document.getElementById(`badge-${i}`).innerHTML='';}
-            for(let h=1;h<=18;h++) {
+            for(let i=1; i<=18; i++){if(document.getElementById(`badge-${i}`))document.getElementById(`badge-${i}`).innerHTML='';}
+            for(let h=1; h<=18; h++) {
                 let r=true, gS=[], nS=[], par=course.pars[h-1];
-                for(let i=0;i<4;i++){ let d=holeData[h]?.[i]||{}; if(d.gross===''){r=false;break;} gS[i]=parseInt(d.gross); nS[i]=gS[i]-(roster.players[i].ch>=course.hcp[h-1]?1:0); }
+                for(let i=0; i<4; i++){ let d=holeData[h]?.[i]||{}; if(d.gross===''){r=false;break;} gS[i]=parseInt(d.gross); nS[i]=gS[i]-(roster.players[i].ch>=course.hcp[h-1]?1:0); }
                 if(mk_results[h]){ if(mk_results[h]==='1')log(h,"Moose Birdie",5,0); if(mk_results[h]==='2')log(h,"Moose Par",2,0); if(mk_results[h]==='3')log(h,"Moose Challenger",1,2); }
                 if(r) {
                     let t1H=false, t2H=false, t1BC=0, t2BC=0;
@@ -208,7 +207,7 @@
                     }
                     if(t1BC===2&&!mk_results[h])log(h,"DOUBLE DOUG",8,0); if(t2BC===2&&!mk_results[h])log(h,"DOUBLE DOUG",8,2);
                     if(t1H)tStr[0]++;else tStr[0]=0; if(tStr[0]===3){log(h,"TURKEY",5,0);tStr[0]=0;}
-                    if(t2H)tStr[1]++;else tStr[1] = 0; if(tStr[1]===3){log(h,"TURKEY",5,2);tStr[1]=0;}
+                    if(t2H)tStr[1]++;else tStr[1]=0; if(tStr[1]===3){log(h,"TURKEY",5,2);tStr[1]=0;}
                     let same=gS.every(v=>v===gS[0]),bP=gS.every(v=>v>=par+1),dP=gS.every(v=>v>=par+2),hJP=0;
                     if(same) hJP+=2; if(dP) hJP+=10; else if(bP) hJP+=5; jpP+=hJP;
                     let t1N=Math.min(nS[0],nS[1]),t2N=Math.min(nS[2],nS[3]);
@@ -228,24 +227,9 @@
         }
 
         function openPressMenu() {
-            let startH=parseInt(prompt("Enter START hole for press:", activeHole+1>18?18:activeHole+1));
+            let startH=parseInt(prompt("Hole for press:", activeHole+1>18?18:activeHole+1));
             if(isNaN(startH)||startH<1||startH>18)return;
             if(activeBets.some(b=>b.start===startH && b.id!=='f9'&&b.id!=='b9'&&b.id!=='18'))return alert("Press already exists for this hole.");
             
             let f9_last=[...activeBets].filter(b=>b.end===9).pop();
-            let t18_last=[...activeBets].filter(b=>b.end===18).pop();
-            let sF9=f9_last?getMatchStatus(f9_last):0; let s18=t18_last?getMatchStatus(t18_last):0;
-            
-            let opts=[]; if(startH<=9 && sF9!==0)opts.push("1: Single Front (F9)"); if(startH<=9 && sF9!==0 && s18!==0)opts.push("2: Double Front (F9+T18)"); if(startH>9 && s18!==0)opts.push("3: Press Remaining (T18)");
-            if(opts.length===0)return alert("Cannot press: Not trailing on latest match.");
-            let c=prompt(`PRESS H${startH}:\n${opts.join('\n')}`);
-            if(c==='1') activeBets.push({id:Date.now(), name:`P-Match H${startH} (${startH<=9?'F9':'B9'})`, start:startH, end:startH<=9?9:18});
-            if(c==='2') { activeBets.push({id:Date.now()+'a', name:`P-Match H${startH} (F9)`, start:startH, end:9}); activeBets.push({id:Date.now()+'b', name:`P-Total H${startH} (T18)`, start:startH, end:18}); }
-            if(c==='3') activeBets.push({id:Date.now(), name:`P-Match H${startH} (T18)`, start:startH, end:18});
-            localStorage.setItem('golf_bets',JSON.stringify(activeBets)); pushToCloud(); buildTable();
-        }
-
-        window.onload=init;
-    </script>
-</body>
-</html>
+            let t18_last=[...activeBets].filter(b=>b.end===
