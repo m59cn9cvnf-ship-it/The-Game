@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: Directory Edition</title>
+    <title>THE GAME: v8.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -23,8 +23,8 @@
         .trash-btn { background: #334155; border: 1px solid #475569; border-radius: 6px; padding: 10px 4px; font-size: 9px; font-weight: 900; color: #cbd5e1; line-height: 1.2; }
         .trash-btn.active { background: #10b981; border-color: #34d399; color: white; }
         .trash-btn.active-red { background: #ef4444; border-color: #f87171; color: white; }
-        #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 900; font-size: 14px; z-index: 200; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.2); pointer-events: none; }
         input, select { background: #0f172a !important; color: white !important; border: 1px solid #334155 !important; }
+        #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 900; font-size: 14px; z-index: 200; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); pointer-events: none; }
     </style>
 </head>
 <body class="p-2">
@@ -34,21 +34,33 @@
     <div id="app" class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-4 px-2">
             <h1 class="text-2xl font-black italic text-emerald-400 uppercase tracking-tighter">The Game</h1>
-            <div class="flex gap-2">
-                <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-[10px] bg-slate-800 px-4 py-2 rounded-full border border-slate-700 uppercase font-bold text-emerald-400">Setup</button>
-            </div>
+            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-[10px] bg-slate-800 px-4 py-2 rounded-full border border-slate-700 uppercase font-bold text-emerald-400">Setup</button>
         </header>
 
-        <section id="setup" class="card mb-4 hidden">
+        <section id="setup" class="card mb-4">
             <div class="mb-6">
-                <h2 class="text-[10px] font-black text-blue-400 uppercase mb-2 tracking-widest">1. Cloud Sync</h2>
-                <input type="text" id="game-id-in" placeholder="GAME CODE (E.G. LOGAN1)" class="p-3 rounded-xl w-full text-sm font-mono uppercase">
+                <h2 class="text-[10px] font-black text-blue-400 uppercase mb-2 tracking-widest italic">Live Sync Code</h2>
+                <input type="text" id="game-id-in" placeholder="E.G. LOGAN1" class="p-3 rounded-xl w-full text-sm font-mono uppercase">
             </div>
 
             <div class="mb-6">
-                <h2 class="text-[10px] font-black text-emerald-400 uppercase mb-2 tracking-widest">2. Course Selection</h2>
+                <h2 class="text-[10px] font-black text-amber-400 uppercase mb-2 tracking-widest italic">Rosters & Indexes</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <input type="text" id="t1-name-in" placeholder="Team A Name" class="p-2 rounded w-full text-[10px] font-bold">
+                        <div id="t1-players" class="space-y-3"></div>
+                    </div>
+                    <div class="space-y-2">
+                        <input type="text" id="t2-name-in" placeholder="Team B Name" class="p-2 rounded w-full text-[10px] font-bold">
+                        <div id="t2-players" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-[10px] font-black text-emerald-400 uppercase mb-2 tracking-widest italic">Course Selection</h2>
                 <select id="course-selector" onchange="loadSavedCourse(this.value)" class="w-full p-3 rounded-xl text-sm mb-3">
-                    <option value="">-- Select Saved Course --</option>
+                    <option value="">-- Manual Entry / New Course --</option>
                 </select>
                 <div class="grid grid-cols-3 gap-2 mb-2">
                     <input type="text" id="course-name" placeholder="Course Name" class="p-2 rounded text-xs col-span-3">
@@ -56,31 +68,17 @@
                     <input type="number" id="course-slope" placeholder="Slope" class="p-2 rounded text-xs">
                     <input type="number" id="course-par" placeholder="Par" class="p-2 rounded text-xs">
                 </div>
-                <input type="text" id="course-pars-list" placeholder="Pars (4,4,3...)" class="p-2 rounded w-full text-xs mb-1">
-                <input type="text" id="course-hcp-list" placeholder="HCPs (1,13,11...)" class="p-2 rounded w-full text-xs">
+                <input type="text" id="course-pars-list" placeholder="Pars (4,4,3,4...)" class="p-2 rounded w-full text-xs mb-1">
+                <input type="text" id="course-hcp-list" placeholder="HCPs (1,13,11,7...)" class="p-2 rounded w-full text-xs">
             </div>
 
-            <div class="mb-6">
-                <h2 class="text-[10px] font-black text-amber-400 uppercase mb-2 tracking-widest">3. Rosters</h2>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <input type="text" id="t1-name-in" placeholder="Team A Name" class="p-2 rounded w-full text-[10px] font-bold border-emerald-500/20">
-                        <div id="t1-players" class="space-y-2"></div>
-                    </div>
-                    <div class="space-y-2">
-                        <input type="text" id="t2-name-in" placeholder="Team B Name" class="p-2 rounded w-full text-[10px] font-bold border-amber-500/20">
-                        <div id="t2-players" class="space-y-2"></div>
-                    </div>
-                </div>
+            <div class="mb-6 border-t border-slate-700 pt-4">
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Nassau Value ($ per point)</label>
+                <input type="number" id="nassau-val-in" class="p-3 rounded-xl w-full text-sm mt-1" placeholder="5">
             </div>
 
-            <div class="mb-6">
-                <label class="text-[10px] font-bold text-slate-500 uppercase">Nassau Payout ($ per point)</label>
-                <input type="number" id="nassau-val-in" class="p-3 rounded-xl w-full text-sm mt-1">
-            </div>
-
-            <button onclick="saveEverything()" class="w-full bg-emerald-600 py-4 rounded-2xl font-black uppercase text-sm shadow-xl">Start & Sync Round</button>
-            <button onclick="clearAllData()" class="w-full mt-4 bg-red-900/10 text-red-500 py-2 rounded-xl text-[9px] uppercase font-bold border border-red-900/20">Reset Entire App</button>
+            <button onclick="saveEverything()" class="w-full bg-emerald-600 py-5 rounded-2xl font-black uppercase text-sm shadow-xl tracking-widest mb-3">Start & Sync Round</button>
+            <button onclick="clearAllData()" class="w-full bg-red-900/20 text-red-500 py-2 rounded-xl text-[9px] uppercase font-bold border border-red-900/20">Wipe Data & Reset</button>
         </section>
 
         <div class="table-container mb-4 shadow-2xl">
@@ -102,21 +100,19 @@
                 </div>
             </div>
             <div id="match-list" class="space-y-1.5 mb-3 text-xs"></div>
-            <div class="grid grid-cols-2 gap-4 text-[18px] font-black border-t border-slate-800 pt-2 uppercase italic">
+            <div class="grid grid-cols-2 gap-4 text-[20px] font-black border-t border-slate-800 pt-2 uppercase italic">
                 <div id="t1-final" class="text-emerald-400">T1: $0</div>
                 <div id="t2-final" class="text-amber-400 text-right">T2: $0</div>
             </div>
         </div>
     </div>
 
-    <datalist id="player-directory"></datalist>
-
     <div id="score-modal" class="modal">
         <div class="bg-slate-800 p-5 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl overflow-y-auto max-h-[95vh]">
             <div id="modal-title" class="font-black text-emerald-400 text-xl uppercase mb-5 text-center">Hole Entry</div>
-            <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-3 rounded-xl border border-slate-600 bg-slate-700 text-[11px] font-black uppercase text-slate-300">Moose Knuckle</button></div>
+            <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-3 rounded-xl border border-slate-600 bg-slate-700 text-[11px] font-black uppercase text-slate-300">Moose Knuckle Trigger</button></div>
             <div class="space-y-4" id="modal-inputs-area"></div>
-            <button onclick="closeModal()" class="w-full mt-8 bg-emerald-600 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl text-lg">Save & Sync</button>
+            <button onclick="closeModal()" class="w-full mt-8 bg-emerald-600 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl text-lg">Save Hole</button>
         </div>
     </div>
 
@@ -133,14 +129,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let course = JSON.parse(localStorage.getItem('golf_course')) || { name: "Logan River", rating: 70.1, slope: 121, par: 71, pars: [4,4,3,4,4,3,4,4,4,4,4,3,4,4,3,4,5,4], hcp: [1,13,11,7,3,15,17,5,9,2,12,16,10,4,18,14,6,8] };
-        let roster = JSON.parse(localStorage.getItem('golf_roster')) || { t1: "T1", t2: "T2", players: [], nassauVal: 0, gameID: "" };
+        let course = JSON.parse(localStorage.getItem('golf_course')) || { name: "New Course", rating: 70.1, slope: 121, par: 71, pars: [4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4], hcp: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18] };
+        let roster = JSON.parse(localStorage.getItem('golf_roster')) || { t1: "T1", t2: "T2", players: [], nassauVal: 5, gameID: "" };
         let courseDir = JSON.parse(localStorage.getItem('golf_course_dir')) || [];
         let playerDir = JSON.parse(localStorage.getItem('golf_player_dir')) || [];
-        
-        let holeData = {}; 
-        let mk_results = {}; 
-        let activeBets = [
+        let holeData = JSON.parse(localStorage.getItem('golf_holedata')) || {}; 
+        let mk_results = JSON.parse(localStorage.getItem('golf_mk')) || {}; 
+        let activeBets = JSON.parse(localStorage.getItem('golf_bets')) || [
             { id: 'f9', name: 'Front 9', start: 1, end: 9, type: 'f9' },
             { id: 'b9', name: 'Back 9', start: 10, end: 18, type: 'b9' },
             { id: '18', name: 'Total 18', start: 1, end: 18, type: '18' }
@@ -149,18 +144,21 @@
         let currentModalState = {};
 
         function init() {
-            // Populate Directory UI
             const cSel = document.getElementById('course-selector');
-            courseDir.forEach(c => cSel.innerHTML += `<option value="${c.name}">${c.name}</option>`);
+            courseDir.forEach(c => { cSel.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
             
-            const pList = document.getElementById('player-directory');
-            playerDir.forEach(p => pList.innerHTML += `<option value="${p.name}">`);
-
             document.getElementById('t1-name-in').value = roster.t1 || "";
             document.getElementById('t2-name-in').value = roster.t2 || "";
             document.getElementById('game-id-in').value = roster.gameID || "";
             document.getElementById('nassau-val-in').value = roster.nassauVal || "";
-            loadSavedCourse(course.name);
+            
+            // Populate Inputs
+            document.getElementById('course-name').value = course.name;
+            document.getElementById('course-rating').value = course.rating;
+            document.getElementById('course-slope').value = course.slope;
+            document.getElementById('course-par').value = course.par;
+            document.getElementById('course-pars-list').value = course.pars.join(',');
+            document.getElementById('course-hcp-list').value = course.hcp.join(',');
 
             const t1Div = document.getElementById('t1-players');
             const t2Div = document.getElementById('t2-players');
@@ -169,7 +167,7 @@
                 const target = i < 2 ? t1Div : t2Div;
                 target.innerHTML += `
                 <div class="space-y-1">
-                    <input type="text" id="p-n-${i}" list="player-directory" onchange="autoFillIdx(${i})" value="${roster.players?.[i]?.name || ''}" placeholder="Player Name" class="p-2 rounded w-full text-xs">
+                    <input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="Player ${i+1}" class="p-2 rounded w-full text-xs">
                     <input type="number" step="0.1" id="p-i-${i}" value="${roster.players?.[i]?.idx ?? ''}" placeholder="Index" class="p-2 rounded w-full text-xs">
                 </div>`;
             }
@@ -178,9 +176,7 @@
                 db.ref('games/' + roster.gameID).on('value', (snap) => {
                     const data = snap.val();
                     if(data) {
-                        holeData = data.holeData || {};
-                        activeBets = data.activeBets || activeBets;
-                        mk_results = data.mk_results || {};
+                        holeData = data.holeData || {}; activeBets = data.activeBets || activeBets; mk_results = data.mk_results || {};
                         buildTable();
                     }
                 });
@@ -188,101 +184,67 @@
             else document.getElementById('setup').classList.remove('hidden');
         }
 
-        function autoFillIdx(i) {
-            const name = document.getElementById(`p-n-${i}`).value;
-            const match = playerDir.find(p => p.name.toLowerCase() === name.toLowerCase());
-            if(match) document.getElementById(`p-i-${i}`).value = match.idx;
-        }
-
         function loadSavedCourse(name) {
-            const c = courseDir.find(x => x.name === name) || course;
-            document.getElementById('course-name').value = c.name;
-            document.getElementById('course-rating').value = c.rating;
-            document.getElementById('course-slope').value = c.slope;
-            document.getElementById('course-par').value = c.par;
-            document.getElementById('course-pars-list').value = c.pars.join(',');
-            document.getElementById('course-hcp-list').value = c.hcp.join(',');
+            const c = courseDir.find(x => x.name === name);
+            if(c) {
+                document.getElementById('course-name').value = c.name;
+                document.getElementById('course-rating').value = c.rating;
+                document.getElementById('course-slope').value = c.slope;
+                document.getElementById('course-par').value = c.par;
+                document.getElementById('course-pars-list').value = c.pars.join(',');
+                document.getElementById('course-hcp-list').value = c.hcp.join(',');
+            }
         }
 
         function saveEverything() {
             const gid = document.getElementById('game-id-in').value.toUpperCase().trim();
-            
-            // 1. Save Course to Directory
             const newCourse = {
-                name: document.getElementById('course-name').value,
-                rating: parseFloat(document.getElementById('course-rating').value),
-                slope: parseInt(document.getElementById('course-slope').value),
-                par: parseInt(document.getElementById('course-par').value),
+                name: document.getElementById('course-name').value || "Course",
+                rating: parseFloat(document.getElementById('course-rating').value) || 70.1,
+                slope: parseInt(document.getElementById('course-slope').value) || 113,
+                par: parseInt(document.getElementById('course-par').value) || 72,
                 pars: document.getElementById('course-pars-list').value.split(',').map(Number),
                 hcp: document.getElementById('course-hcp-list').value.split(',').map(Number)
             };
-            if(!courseDir.find(x => x.name === newCourse.name)) {
-                courseDir.push(newCourse);
-                localStorage.setItem('golf_course_dir', JSON.stringify(courseDir));
-            }
-            localStorage.setItem('golf_course', JSON.stringify(newCourse));
-            course = newCourse;
+            if(!courseDir.find(x => x.name === newCourse.name)) { courseDir.push(newCourse); localStorage.setItem('golf_course_dir', JSON.stringify(courseDir)); }
+            localStorage.setItem('golf_course', JSON.stringify(newCourse)); course = newCourse;
 
-            // 2. Save Players to Directory & Build Roster
-            roster = { t1: document.getElementById('t1-name-in').value, t2: document.getElementById('t2-name-in').value, nassauVal: parseFloat(document.getElementById('nassau-val-in').value), gameID: gid, players: [] };
+            roster = { t1: document.getElementById('t1-name-in').value || "T1", t2: document.getElementById('t2-name-in').value || "T2", nassauVal: parseFloat(document.getElementById('nassau-val-in').value) || 0, gameID: gid, players: [] };
             for(let i=0; i<4; i++) {
-                let n = document.getElementById(`p-n-${i}`).value;
+                let n = document.getElementById(`p-n-${i}`).value || `P${i+1}`;
                 let idx = parseFloat(document.getElementById(`p-i-${i}`).value) || 0;
                 let ch = Math.round((idx * (course.slope / 113)) + (course.rating - course.par));
                 roster.players.push({ name: n, idx, ch });
-                
-                // Update directory
-                const pIdx = playerDir.findIndex(x => x.name.toLowerCase() === n.toLowerCase());
-                if(pIdx > -1) playerDir[pIdx].idx = idx;
-                else playerDir.push({ name: n, idx });
             }
-            localStorage.setItem('golf_player_dir', JSON.stringify(playerDir));
             localStorage.setItem('golf_roster', JSON.stringify(roster));
-            
             if(gid) pushToCloud();
+            document.getElementById('setup').classList.add('hidden');
             location.reload();
         }
 
-        function pushToCloud() {
-            if(!roster.gameID) return;
-            db.ref('games/' + roster.gameID).set({ holeData, activeBets, mk_results, roster, course });
-        }
-
+        function pushToCloud() { if(roster.gameID) db.ref('games/' + roster.gameID).set({ holeData, activeBets, mk_results, roster, course }); }
         function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display='none', 2000); }
 
         function buildTable() {
-            const hRow = document.getElementById('header-row');
-            const pRow = document.getElementById('par-row');
-            hRow.innerHTML = '<th class="sticky-col">HOLE</th>';
-            pRow.innerHTML = '<th class="sticky-col text-[9px]">PAR/HCP</th>';
-            for(let i=1; i<=18; i++) {
-                hRow.innerHTML += `<th id="h-head-${i}">${i}<div id="badge-${i}"></div></th>`;
-                pRow.innerHTML += `<td id="p-head-${i}">${course.pars[i-1]}<br><span class="opacity-30">${course.hcp[i-1]}</span></td>`;
-            }
-            hRow.innerHTML += `<th class="stat-col">TOT</th><th class="stat-col">+/-</th>`;
-            pRow.innerHTML += `<td class="stat-col"></td><td class="stat-col"></td>`;
-
+            const hRow = document.getElementById('header-row'); const pRow = document.getElementById('par-row');
+            hRow.innerHTML = '<th class="sticky-col">HOLE</th>'; pRow.innerHTML = '<th class="sticky-col text-[9px]">PAR/HCP</th>';
+            for(let i=1; i<=18; i++) { hRow.innerHTML += `<th id="h-head-${i}">${i}<div id="badge-${i}"></div></th>`; pRow.innerHTML += `<td id="p-head-${i}">${course.pars[i-1]}<br><span class="opacity-30">${course.hcp[i-1]}</span></td>`; }
+            hRow.innerHTML += `<th class="stat-col">TOT</th><th class="stat-col">+/-</th>`; pRow.innerHTML += `<td class="stat-col"></td><td class="stat-col"></td>`;
             const tbody = document.getElementById('player-rows'); tbody.innerHTML = '';
-            
-            let holeWinners = {};
+            let winners = {};
             for(let h=1; h<=18; h++) {
-                let nets = []; let fin = true;
-                for(let i=0; i<4; i++) {
-                    let d = holeData[h]?.[i];
-                    if(!d || d.gross === '') { fin = false; break; }
-                    nets[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0);
-                }
-                if(fin) { let minN = Math.min(...nets); holeWinners[h] = nets.map((n, idx) => n === minN ? idx : -1).filter(idx => idx !== -1); }
+                let ns = []; let f = true;
+                for(let i=0; i<4; i++) { let d = holeData[h]?.[i]; if(!d || d.gross === '') { f = false; break; } ns[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
+                if(f) { let m = Math.min(...ns); winners[h] = ns.map((v, ix) => v === m ? ix : -1).filter(v => v > -1); }
             }
-
             roster.players.forEach((p, pIdx) => {
                 let tG = 0, tP = 0;
                 let row = `<tr><td class="sticky-col"><div class="text-[9px] font-black text-emerald-500 uppercase">${pIdx < 2 ? roster.t1 : roster.t2}</div><div class="font-black text-[15px]">${p.name}</div></td>`;
                 for(let h=1; h<=18; h++) {
                     const d = holeData[h]?.[pIdx] || {}; const s = d.gross || ''; if(s !== '') { tG += parseInt(s); tP += course.pars[h-1]; }
-                    let isPress = activeBets.some(b => b.start === h && !['f9','b9','18'].includes(b.id));
-                    let pCls = isPress ? 'border-l-[5px] border-emerald-500' : '';
-                    let wCls = (holeWinners[h] && holeWinners[h].includes(pIdx)) ? 'winner-highlight' : '';
+                    let isp = activeBets.some(b => b.start === h && !['f9','b9','18'].includes(b.id));
+                    let pCls = isp ? 'border-l-[5px] border-emerald-500' : '';
+                    let wCls = (winners[h] && winners[h].includes(pIdx)) ? 'winner-highlight' : '';
                     row += `<td class="score-cell ${pCls} ${wCls} ${s!==''?'bg-emerald-950/20':''}" onclick="openModal(${h})"><span>${s}</span>${p.ch >= course.hcp[h-1] ? '<div class="stroke-dot"></div>' : ''}</td>`;
                 }
                 const rel = tG > 0 ? (tG - tP) : 0;
@@ -293,30 +255,99 @@
         }
 
         function openModal(h) {
-            activeHole = h;
-            document.getElementById('modal-title').innerText = `HOLE ${h}`;
-            document.getElementById('mk-container').classList.toggle('hidden', course.pars[h-1] !== 3);
+            activeHole = h; document.getElementById('modal-title').innerText = `HOLE ${h}`; document.getElementById('mk-container').classList.toggle('hidden', course.pars[h-1] !== 3);
             const area = document.getElementById('modal-inputs-area'); area.innerHTML = '';
             roster.players.forEach((p, i) => {
-                const existing = holeData[h]?.[i] || { gross: '', sandie: false, greenie: false, reversie: false, jSingle: false, jDouble: false, j3P: false, jReversie: false };
-                currentModalState[i] = { ...existing };
+                const ex = holeData[h]?.[i] || { gross: '', sandie: false, greenie: false, reversie: false, jSingle: false, jDouble: false, j3P: false, jReversie: false };
+                currentModalState[i] = { ...ex };
                 area.innerHTML += `
                     <div class="bg-slate-900/50 p-4 rounded-3xl border border-slate-700/50">
                         <div class="flex justify-between items-center mb-3">
                             <label class="font-black uppercase text-slate-400 text-sm">${p.name}</label>
-                            <input type="number" id="mod-gross-${i}" inputmode="numeric" value="${existing.gross}" class="bg-slate-800 border-2 border-emerald-500/50 p-2 rounded-xl w-20 text-center font-black text-2xl text-emerald-400" oninput="currentModalState[${i}].gross = this.value; if(this.value.length >= 1 && ${i < 3}) document.getElementById('mod-gross-${i+1}').focus()">
+                            <input type="number" id="mod-gross-${i}" inputmode="numeric" value="${ex.gross}" class="bg-slate-800 border-2 border-emerald-500/50 p-2 rounded-xl w-20 text-center font-black text-2xl text-emerald-400" oninput="currentModalState[${i}].gross = this.value; if(this.value.length >= 1 && ${i < 3}) document.getElementById('mod-gross-${i+1}').focus()">
                         </div>
                         <div class="grid grid-cols-4 gap-2">
-                            <button onclick="tapT(this, ${i}, 'sandie')" class="trash-btn ${existing.sandie ? 'active' : ''}">SANDIE</button>
-                            <button onclick="tapT(this, ${i}, 'jSingle')" class="trash-btn ${existing.jSingle ? 'active' : ''}">J-BIRD</button>
-                            <button onclick="tapT(this, ${i}, 'jDouble')" class="trash-btn ${existing.jDouble ? 'active' : ''}">J-EAGLE</button>
-                            <button onclick="tapT(this, ${i}, 'j3P', true)" class="trash-btn ${existing.j3P ? 'active-red' : ''}">J-3P</button>
-                            <button onclick="tapT(this, ${i}, 'jReversie', true)" class="trash-btn col-span-4 ${existing.jReversie ? 'active-red' : ''}">JONES E REVERSIE ($5)</button>
-                            ${course.pars[h-1] === 3 ? `<button onclick="tapT(this, ${i}, 'greenie')" class="trash-btn col-span-2 ${existing.greenie ? 'active' : ''}">GREENIE</button><button onclick="tapT(this, ${i}, 'reversie', true)" class="trash-btn col-span-2 ${existing.reversie ? 'active-red' : ''}">REVERSIE</button>` : ''}
+                            <button onclick="tapT(this, ${i}, 'sandie')" class="trash-btn ${ex.sandie ? 'active' : ''}">SANDIE</button>
+                            <button onclick="tapT(this, ${i}, 'jSingle')" class="trash-btn ${ex.jSingle ? 'active' : ''}">J-BIRD</button>
+                            <button onclick="tapT(this, ${i}, 'jDouble')" class="trash-btn ${ex.jDouble ? 'active' : ''}">J-EAGLE</button>
+                            <button onclick="tapT(this, ${i}, 'j3P', true)" class="trash-btn ${ex.j3P ? 'active-red' : ''}">J-3P</button>
+                            <button onclick="tapT(this, ${i}, 'jReversie', true)" class="trash-btn col-span-4 ${ex.jReversie ? 'active-red' : ''}">JONES E REVERSIE ($5)</button>
+                            ${course.pars[h-1] === 3 ? `<button onclick="tapT(this, ${i}, 'greenie')" class="trash-btn col-span-2 ${ex.greenie ? 'active' : ''}">GREENIE</button><button onclick="tapT(this, ${i}, 'reversie', true)" class="trash-btn col-span-2 ${ex.reversie ? 'active-red' : ''}">REVERSIE</button>` : ''}
                         </div>
                     </div>`;
             });
             document.getElementById('score-modal').style.display = 'flex';
         }
 
-        function tapT(btn, pI
+        function tapT(btn, pI, ty, isR = false) { currentModalState[pI][ty] = !currentModalState[pI][ty]; btn.classList.toggle('active', currentModalState[pI][ty] && !isR); btn.classList.toggle('active-red', currentModalState[pI][ty] && isR); showToast("UPDATED"); }
+        function closeModal() { if(!holeData[activeHole]) holeData[activeHole] = {}; for(let i=0; i<4; i++) { holeData[activeHole][i] = { ...currentModalState[i] }; } localStorage.setItem('golf_holedata', JSON.stringify(holeData)); pushToCloud(); document.getElementById('score-modal').style.display = 'none'; buildTable(); }
+        function triggerMK() { let res = prompt("MK Outcome?\n1: Birdie (+$5)\n2: Par (+$2)\n3: Bogey (+$1 to Opp)"); if(['1','2','3'].includes(res)) mk_results[activeHole] = res; localStorage.setItem('golf_mk', JSON.stringify(mk_results)); closeModal(); }
+
+        function calculateEverything() {
+            let t1_t = 0, t2_t = 0, logH = '', jpP = 0, tStr = [0, 0];
+            function log(h, l, a, tI) { logH = `<div class="log-row"><span>H${h} - ${l}</span><span class="${tI < 2 ? 'text-emerald-400':'text-amber-400'}">+$${a}</span></div>` + logH; tI < 2 ? t1_t += a : t2_t += a; }
+            for(let i=1; i<=18; i++) { if(document.getElementById(`badge-${i}`)) document.getElementById(`badge-${i}`).innerHTML = ''; }
+            for(let h=1; h<=18; h++) {
+                let r = true, gS = [], nS = [], par = course.pars[h-1];
+                for(let i=0; i<4; i++) { let d = holeData[h]?.[i] || {}; if(d.gross === '' || d.gross === undefined) { r = false; break; } gS[i] = parseInt(d.gross); nS[i] = gS[i] - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
+                if(mk_results[h]) { if(mk_results[h] === '1') log(h, "Moose Birdie", 5, 0); if(mk_results[h] === '2') log(h, "Moose Par", 2, 0); if(mk_results[h] === '3') log(h, "Moose Challenger", 1, 2); }
+                if(r) {
+                    let t1H = false, t2H = false, t1BC = 0, t2BC = 0;
+                    for(let i=0; i<4; i++) {
+                        let d = holeData[h][i];
+                        if(gS[i] === par - 1 && !mk_results[h]) { log(h, `${roster.players[i].name} Birdie`, 1, i); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
+                        if(gS[i] <= par - 2) { log(h, `${roster.players[i].name} Eagle`, 10, i); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
+                        if(d.sandie) { log(h, `${roster.players[i].name} Sandie`, 1, i); if(i<2) t1H=true; else t2H=true; }
+                        if(d.jSingle) log(h, `${roster.players[i].name} Jones Birdie`, 3, i);
+                        if(d.jDouble) log(h, `${roster.players[i].name} Jones Eagle`, 5, i);
+                        if(d.j3P) log(h, `${roster.players[i].name} Jones 3P`, 1, i < 2 ? 2 : 0);
+                        if(d.jReversie) log(h, `${roster.players[i].name} Jones E Reversie`, 5, i < 2 ? 2 : 0);
+                        if(d.greenie) { log(h, `${roster.players[i].name} Greenie`, 1, i); if(i<2) t1H=true; else t2H=true; }
+                        if(d.reversie) { log(h, `${roster.players[i].name} Reversie`, 1, i < 2 ? 2 : 0); if(i<2) t2H=true; else t1H=true; }
+                    }
+                    if(t1BC === 2 && !mk_results[h]) log(h, `${roster.t1} DOUBLE DOUG`, 8, 0);
+                    if(t2BC === 2 && !mk_results[h]) log(h, `${roster.t2} DOUBLE DOUG`, 8, 2);
+                    if(t1H) tStr[0]++; else tStr[0] = 0; if(tStr[0] === 3) { log(h, `TURKEY: ${roster.t1}`, 5, 0); tStr[0] = 0; }
+                    if(t2H) tStr[1]++; else tStr[1] = 0; if(tStr[1] === 3) { log(h, `TURKEY: ${roster.t2}`, 5, 2); tStr[1] = 0; }
+                    let same = gS.every(v => v === gS[0]), bP = gS.every(v => v >= par + 1), dP = gS.every(v => v >= par + 2), hJP = 0;
+                    if(same) hJP += 2; if(dP) hJP += 10; else if(bP) hJP += 5; jpP += hJP;
+                    let t1N = Math.min(nS[0], nS[1]), t2N = Math.min(nS[2], nS[3]);
+                    if(t1N < t2N && jpP > 0) { log(h, `${roster.t1} WIN POT`, jpP, 0); jpP = 0; }
+                    else if(t2N < t1N && jpP > 0) { log(h, `${roster.t2} WIN POT`, jpP, 2); jpP = 0; }
+                    else if(jpP > 0 && h < 18) { let bT = dP ? "PF" : (bP ? "JF" : "JP"); document.getElementById(`badge-${h+1}`).innerHTML = `<div class="jp-badge">${bT} $${jpP}</div>`; }
+                }
+            }
+            document.getElementById('log-content').innerHTML = logH || 'No trash yet.';
+            let totalMD = 0; const mList = document.getElementById('match-list'); mList.innerHTML = '';
+            activeBets.forEach(m => {
+                let d = 0;
+                for(let h=m.start; h<=m.end; h++) {
+                    let r = true, ns = [];
+                    for(let i=0; i<4; i++) { let d = holeData[h]?.[i]; if(!d || d.gross === '') { r = false; break; } ns[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
+                    if(r) { let aB = Math.min(ns[0], ns[1]), bB = Math.min(ns[2], ns[3]); if(aB < bB) d++; else if(bB < aB) d--; }
+                }
+                totalMD += (d * roster.nassauVal);
+                let sT = d === 0 ? "AS" : (d > 0 ? `${roster.t1} +${d}` : `${roster.t2} +${Math.abs(d)}`);
+                mList.innerHTML += `<div class="flex justify-between items-center"><span class="font-bold text-[10px] uppercase text-slate-500">${m.name}</span><span class="font-mono text-emerald-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-[11px]">${sT}</span></div>`;
+            });
+            document.getElementById('t1-final').innerText = `${roster.t1}: $${t1_t + totalMD}`;
+            document.getElementById('t2-final').innerText = `${roster.t2}: $${t2_t - totalMD}`;
+            document.getElementById('press-btn').classList.toggle('hidden', totalMD === 0 && activeBets.length === 3);
+        }
+
+        function openPressMenu() {
+            let next = activeHole + 1; if(next > 18) return;
+            let type = prompt(`PRESS ON HOLE ${next}?\n1: Single Match\n2: Double Stake`);
+            if(type === '1') activeBets.push({ id: Date.now(), name: `P-Match H${next}`, start: next, end: next <= 9 ? 9 : 18 });
+            if(type === '2') {
+                activeBets.push({ id: Date.now()+'a', name: `P-Match H${next}`, start: next, end: next <= 9 ? 9 : 18 });
+                if(next <= 9) activeBets.push({ id: Date.now()+'b', name: `P-Total H${next}`, start: next, end: 18 });
+            }
+            localStorage.setItem('golf_bets', JSON.stringify(activeBets)); pushToCloud(); buildTable();
+        }
+
+        function clearAllData() { if(confirm("Start fresh?")) { localStorage.clear(); location.reload(); } }
+        window.onload = init;
+    </script>
+</body>
+</html>
