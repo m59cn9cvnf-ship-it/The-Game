@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: v9.1 Stable</title>
+    <title>THE GAME: v9.2 Stable</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -24,8 +24,8 @@
         .trash-btn.active { background: #10b981; border-color: #34d399; color: white; }
         .trash-btn.active-red { background: #ef4444; border-color: #f87171; color: white; }
         input, select { background: #0f172a !important; color: white !important; border: 1px solid #334155 !important; }
-        #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 900; font-size: 14px; z-index: 200; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); pointer-events: none; }
-        .log-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #334155; font-size: 12px; }
+        #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 900; font-size: 14px; z-index: 200; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.3); pointer-events: none; }
+        .log-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #334155; font-size: 13px; }
     </style>
 </head>
 <body class="p-2">
@@ -42,44 +42,35 @@
         </header>
 
         <section id="setup" class="card mb-4 hidden">
-            <div class="mb-6"><h2 class="text-[11px] font-black text-blue-400 uppercase mb-2 tracking-widest italic">1. Cloud Sync</h2><input type="text" id="game-id-in" placeholder="E.G. LOGAN1" class="p-3 rounded-xl w-full text-sm font-mono uppercase"></div>
-            
+            <div class="mb-6"><h2 class="text-[11px] font-black text-blue-400 uppercase mb-2 tracking-widest italic">1. Cloud Sync</h2><input type="text" id="game-id-in" placeholder="GAME CODE" class="p-3 rounded-xl w-full text-sm font-mono uppercase"></div>
             <div class="mb-6">
                 <h2 class="text-[11px] font-black text-amber-400 uppercase mb-2 tracking-widest italic">2. Rosters</h2>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-3"><input type="text" id="t1-name-in" placeholder="Team A" class="p-2 rounded w-full text-xs font-bold border-emerald-500/20"><div id="t1-players" class="space-y-3"></div></div>
-                    <div class="space-y-3"><input type="text" id="t2-name-in" placeholder="Team B" class="p-2 rounded w-full text-xs font-bold border-amber-500/20"><div id="t2-players" class="space-y-3"></div></div>
+                    <div class="space-y-3"><input type="text" id="t1-name-in" placeholder="Team A" class="p-2 rounded w-full text-xs font-bold"><div id="t1-players" class="space-y-3"></div></div>
+                    <div class="space-y-3"><input type="text" id="t2-name-in" placeholder="Team B" class="p-2 rounded w-full text-xs font-bold"><div id="t2-players" class="space-y-3"></div></div>
                 </div>
             </div>
-
             <div class="mb-6">
-                <h2 class="text-[11px] font-black text-emerald-400 uppercase mb-2 tracking-widest italic">3. Course selection</h2>
-                <select id="course-selector" onchange="loadSavedCourse(this.value)" class="w-full p-3 rounded-xl text-sm mb-3"><option value="">-- Select Saved / New --</option></select>
-                <div class="grid grid-cols-3 gap-2 mb-2">
-                    <input type="text" id="course-name" placeholder="Course Name" class="p-2 rounded text-xs col-span-3">
-                    <input type="number" id="course-rating" placeholder="Rate" class="p-2 rounded text-xs">
-                    <input type="number" id="course-slope" placeholder="Slope" class="p-2 rounded text-xs">
-                    <input type="number" id="course-par" placeholder="Par" class="p-2 rounded text-xs">
-                </div>
-                <input type="text" id="course-pars-list" placeholder="Pars (4,4,3...)" class="p-2 rounded w-full text-xs mb-1">
-                <input type="text" id="course-hcp-list" placeholder="HCPs (1,13,11...)" class="p-2 rounded w-full text-xs">
+                <h2 class="text-[11px] font-black text-emerald-400 uppercase mb-2 tracking-widest italic">3. Course</h2>
+                <select id="course-selector" onchange="loadSavedCourse(this.value)" class="w-full p-3 rounded-xl text-sm mb-3"><option value="">-- Manual Entry --</option></select>
+                <div class="grid grid-cols-3 gap-2 mb-2"><input type="text" id="course-name" placeholder="Name" class="p-2 rounded text-xs col-span-3"><input type="number" id="course-rating" placeholder="Rate" class="p-2 rounded text-xs"><input type="number" id="course-slope" placeholder="Slope" class="p-2 rounded text-xs"><input type="number" id="course-par" placeholder="Par" class="p-2 rounded text-xs"></div>
+                <input type="text" id="course-pars-list" placeholder="Pars (4,4,3...)" class="p-2 rounded w-full text-xs mb-1"><input type="text" id="course-hcp-list" placeholder="HCPs (1,13...)" class="p-2 rounded w-full text-xs">
             </div>
-
             <div class="mb-6 border-t border-slate-700 pt-4"><label class="text-[11px] font-bold text-slate-500 uppercase">Nassau Payout ($)</label><input type="number" id="nassau-val-in" class="p-3 rounded-xl w-full text-sm mt-1" placeholder="5"></div>
-            <button onclick="saveEverything()" class="w-full bg-emerald-600 py-5 rounded-2xl font-black uppercase text-sm shadow-xl tracking-widest">Start & Sync Round</button>
+            <button onclick="saveEverything()" class="w-full bg-emerald-600 py-5 rounded-2xl font-black uppercase text-sm shadow-xl">Start Round</button>
         </section>
 
         <div class="table-container mb-4 shadow-2xl"><table id="main-scorecard"><thead><tr id="header-row" class="bg-slate-800 text-slate-400 text-[13px]"><th class="sticky-col">HOLE</th></tr><tr id="par-row" class="bg-slate-900 text-slate-500 text-[11px]"><th class="sticky-col">PAR/HCP</th></tr></thead><tbody id="player-rows"></tbody></table></div>
 
         <div class="card bg-slate-950 border-emerald-500/40 sticky bottom-2 shadow-2xl">
             <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
-                <div class="text-[12px] font-black text-emerald-400 uppercase tracking-widest italic">Nassau Match Status</div>
+                <div class="text-[12px] font-black text-emerald-400 uppercase tracking-widest italic">Nassau Ledger</div>
                 <div class="flex gap-2">
                     <button onclick="document.getElementById('log-modal').style.display='flex'" class="bg-slate-800 px-3 py-2 rounded-lg text-[11px] font-bold uppercase border border-slate-700">Trash Log</button>
                     <button id="press-btn" onclick="openPressMenu()" class="bg-red-600 px-4 py-2 rounded-lg text-[11px] font-black uppercase shadow-lg">Press</button>
                 </div>
             </div>
-            <div id="match-list" class="space-y-1 mb-3 text-[12px]"></div>
+            <div id="match-list" class="space-y-1 mb-3 text-xs"></div>
             <div class="grid grid-cols-2 gap-4 text-[22px] font-black border-t border-slate-800 pt-2 uppercase italic">
                 <div id="t1-final" class="text-emerald-400">T1: $0</div>
                 <div id="t2-final" class="text-amber-400 text-right">T2: $0</div>
@@ -98,9 +89,9 @@
 
     <div id="log-modal" class="modal">
         <div class="bg-slate-900 p-6 rounded-2xl w-full max-w-sm border border-slate-700 max-h-[80vh] flex flex-col">
-            <h2 class="text-center font-black text-emerald-500 uppercase mb-4 tracking-tighter">Trash Details</h2>
+            <h2 class="text-center font-black text-emerald-500 uppercase mb-4 tracking-tighter italic">Trash Log Breakdown</h2>
             <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2 text-xs"></div>
-            <button onclick="document.getElementById('log-modal').style.display='none'" class="w-full bg-slate-700 py-4 rounded-2xl font-bold uppercase text-xs">Return</button>
+            <button onclick="document.getElementById('log-modal').style.display='none'" class="w-full bg-slate-700 py-4 rounded-2xl font-bold uppercase text-xs">Close</button>
         </div>
     </div>
 
@@ -130,7 +121,6 @@
             document.getElementById('course-name').value = course.name; document.getElementById('course-rating').value = course.rating;
             document.getElementById('course-slope').value = course.slope; document.getElementById('course-par').value = course.par;
             document.getElementById('course-pars-list').value = course.pars.join(','); document.getElementById('course-hcp-list').value = course.hcp.join(',');
-            
             const t1Div = document.getElementById('t1-players'); const t2Div = document.getElementById('t2-players');
             t1Div.innerHTML = ''; t2Div.innerHTML = '';
             for(let i=0; i<4; i++) {
@@ -143,14 +133,10 @@
         }
 
         function safeNewRound() {
-            const c = prompt("Confirm New Round?\n1: Clear scores but KEEP saved courses/players\n2: Cancel");
-            if(c === '1') {
+            const choice = prompt("Confirm New Round?\n1: Clear scores only (keep Courses/Players)\n2: Cancel");
+            if(choice === '1') {
                 holeData = {}; mk_results = {}; 
-                activeBets = [
-                    { id: 'f9', name: 'Front 9 (F9)', start: 1, end: 9, type: 'f9' },
-                    { id: 'b9', name: 'Back 9 (B9)', start: 10, end: 18, type: 'b9' },
-                    { id: '18', name: 'Total 18 (T18)', start: 1, end: 18, type: '18' }
-                ];
+                activeBets = [{ id: 'f9', name: 'Front 9 (F9)', start: 1, end: 9, type: 'f9' },{ id: 'b9', name: 'Back 9 (B9)', start: 10, end: 18, type: 'b9' },{ id: '18', name: 'Total 18 (T18)', start: 1, end: 18, type: '18' }];
                 localStorage.setItem('golf_holedata', JSON.stringify(holeData));
                 localStorage.setItem('golf_mk', JSON.stringify(mk_results));
                 localStorage.setItem('golf_bets', JSON.stringify(activeBets));
@@ -159,7 +145,6 @@
         }
 
         function loadSavedCourse(n) { const c=courseDir.find(x=>x.name===n); if(c){document.getElementById('course-name').value=c.name;document.getElementById('course-rating').value=c.rating;document.getElementById('course-slope').value=c.slope;document.getElementById('course-par').value=c.par;document.getElementById('course-pars-list').value=c.pars.join(',');document.getElementById('course-hcp-list').value=c.hcp.join(',');} }
-
         function saveEverything() {
             const gid = document.getElementById('game-id-in').value.toUpperCase().trim();
             const nC = { name: document.getElementById('course-name').value, rating: parseFloat(document.getElementById('course-rating').value), slope: parseInt(document.getElementById('course-slope').value), par: parseInt(document.getElementById('course-par').value), pars: document.getElementById('course-pars-list').value.split(',').map(Number), hcp: document.getElementById('course-hcp-list').value.split(',').map(Number) };
@@ -171,9 +156,10 @@
         }
 
         function pushToCloud() { if(roster.gameID) db.ref('games/'+roster.gameID).set({holeData,activeBets,mk_results,roster,course}); }
+        function showToast(m){const t=document.getElementById('toast');t.innerText=m;t.style.display='block';setTimeout(()=>t.style.display='none',1500);}
 
         function buildTable() {
-            const hR=document.getElementById('header-row'); const pR=document.getElementById('par-row'); hR.innerHTML='<th class="sticky-col">HOLE</th>'; pR.innerHTML='<th class="sticky-col text-[10px]">PAR/HCP</th>';
+            const hR=document.getElementById('header-row'); const pR=document.getElementById('par-row'); hR.innerHTML='<th class="sticky-col">HOLE</th>'; pR.innerHTML='<th class="sticky-col">PAR/HCP</th>';
             for(let i=1; i<=18; i++){ hR.innerHTML+=`<th id="h-head-${i}">${i}<div id="badge-${i}"></div></th>`; pR.innerHTML+=`<td id="p-head-${i}">${course.pars[i-1]}<br><span class="opacity-30">${course.hcp[i-1]}</span></td>`; }
             hR.innerHTML+=`<th class="stat-col">TOT</th><th class="stat-col">+/-</th>`; pR.innerHTML+=`<td class="stat-col"></td><td class="stat-col"></td>`;
             const tbody=document.getElementById('player-rows'); tbody.innerHTML='';
@@ -197,7 +183,7 @@
             document.getElementById('score-modal').style.display='flex';
         }
 
-        function tapT(b,i,ty,ir=false){ currentModalState[i][ty]=!currentModalState[i][ty]; b.classList.toggle('active',currentModalState[i][ty]&&!ir); b.classList.toggle('active-red',currentModalState[i][ty]&&ir); }
+        function tapT(b,i,ty,ir=false){ currentModalState[i][ty]=!currentModalState[i][ty]; b.classList.toggle('active',currentModalState[i][ty]&&!ir); b.classList.toggle('active-red',currentModalState[i][ty]&&ir); showToast("UPDATED"); }
         function closeModal(){ if(!holeData[activeHole])holeData[activeHole]={}; for(let i=0;i<4;i++){holeData[activeHole][i]={...currentModalState[i]};} localStorage.setItem('golf_holedata',JSON.stringify(holeData)); pushToCloud(); document.getElementById('score-modal').style.display='none'; buildTable(); }
         function triggerMK(){ let r=prompt("MK Outcome?\n1: Birdie (+5)\n2: Par (+2)\n3: Bogey (+1 Opp)"); if(['1','2','3'].includes(r))mk_results[activeHole]=r; closeModal(); }
 
@@ -207,14 +193,14 @@
             for(let i=1;i<=18;i++){if(document.getElementById(`badge-${i}`))document.getElementById(`badge-${i}`).innerHTML='';}
             for(let h=1;h<=18;h++) {
                 let r=true, gS=[], nS=[], par=course.pars[h-1];
-                for(let i=0; i<4; i++){ let d=holeData[h]?.[i]||{}; if(d.gross===''){r=false;break;} gS[i]=parseInt(d.gross); nS[i]=gS[i]-(roster.players[i].ch>=course.hcp[h-1]?1:0); }
+                for(let i=0;i<4;i++){ let d=holeData[h]?.[i]||{}; if(d.gross===''){r=false;break;} gS[i]=parseInt(d.gross); nS[i]=gS[i]-(roster.players[i].ch>=course.hcp[h-1]?1:0); }
                 if(mk_results[h]){ if(mk_results[h]==='1')log(h,"Moose Birdie",5,0); if(mk_results[h]==='2')log(h,"Moose Par",2,0); if(mk_results[h]==='3')log(h,"Moose Challenger",1,2); }
                 if(r) {
                     let t1H=false, t2H=false, t1BC=0, t2BC=0;
-                    for(let i=0; i<4; i++){
+                    for(let i=0;i<4;i++){
                         let d = holeData[h][i];
-                        if(gS[i]===par-1&&!mk_results[h]){ log(h,`${roster.players[i].name} Birdie`,1,i); if(i<2){t1H=true; t1BC++;}else{t2H=true; t2BC++;} }
-                        if(gS[i]<=par-2){ log(h,`${roster.players[i].name} Eagle`,10,i); if(i<2){t1H=true; t1BC++;}else{t2H=true; t2BC++;} }
+                        if(gS[i]===par-1&&!mk_results[h]){ log(h,`${roster.players[i].name} Birdie`,1,i); if(i<2){t1H=true;t1BC++;}else{t2H=true;t2BC++;} }
+                        if(gS[i]<=par-2){ log(h,`${roster.players[i].name} Eagle`,10,i); if(i<2){t1H=true;t1BC++;}else{t2H=true;t2BC++;} }
                         if(d.sandie){ log(h,`${roster.players[i].name} Sandie`,1,i); if(i<2)t1H=true; else t2H=true; }
                         if(d.jSingle)log(h,`${roster.players[i].name} Jones Birdie`,3,i);
                         if(d.jDouble)log(h,`${roster.players[i].name} Jones Eagle`,5,i);
@@ -227,7 +213,7 @@
                     if(t1H)tStr[0]++;else tStr[0]=0; if(tStr[0]===3){log(h,"TURKEY",5,0);tStr[0]=0;}
                     if(t2H)tStr[1]++;else tStr[1]=0; if(tStr[1]===3){log(h,"TURKEY",5,2);tStr[1]=0;}
                     let same=gS.every(v=>v===gS[0]),bP=gS.every(v=>v>=par+1),dP=gS.every(v=>v>=par+2),hJP=0;
-                    if(same) hJP+=2; if(dP) hJP+=10; else if(bP) hJP+=5; jpP+=hJP;
+                    if(same)hJP+=2; if(dP)hJP+=10; else if(bP)hJP+=5; jpP+=hJP;
                     let t1N=Math.min(nS[0],nS[1]),t2N=Math.min(nS[2],nS[3]);
                     if(t1N<t2N&&jpP>0){log(h,"WIN POT",jpP,0);jpP=0;} else if(t2N<t1N&&jpP>0){log(h,"WIN POT",jpP,2);jpP=0;}
                     else if(jpP>0&&h<18){ let bT=dP?"PF":(bP?"JF":"JP"); document.getElementById(`badge-${h+1}`).innerHTML=`<div class="jp-badge">${bT} $${jpP}</div>`; }
@@ -239,7 +225,7 @@
                 let d=0; for(let h=m.start;h<=m.end;h++){ let r=true,ns=[]; for(let i=0;i<4;i++){ let d=holeData[h]?.[i]; if(!d||d.gross===''){r=false;break;} ns[i]=parseInt(d.gross)-(roster.players[i].ch>=course.hcp[h-1]?1:0); } if(r){ let aB=Math.min(ns[0],ns[1]),bB=Math.min(ns[2],ns[3]); if(aB<bB)d++; else if(bB<aB)d--; } }
                 totalMD+=(d*roster.nassauVal);
                 let sT=d===0?"AS":(d>0?`${roster.t1} +${d}`:`${roster.t2} +${Math.abs(d)}`);
-                mList.innerHTML+=`<div class="flex justify-between items-center"><span class="font-bold text-[11px] uppercase text-slate-500">${m.name}</span><span class="font-mono text-emerald-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-[12px]">${sT}</span></div>`;
+                mList.innerHTML+=`<div class="flex justify-between items-center"><span>${m.name}</span><span class="font-mono text-emerald-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">${sT}</span></div>`;
             });
             document.getElementById('t1-final').innerText=`${roster.t1}: $${t1_t+totalMD}`;
             document.getElementById('t2-final').innerText=`${roster.t2}: $${t2_t-totalMD}`;
