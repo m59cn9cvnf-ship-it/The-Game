@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: v8.4</title>
+    <title>THE GAME: v8.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -81,7 +81,7 @@
     <div id="score-modal" class="modal">
         <div class="bg-slate-800 p-5 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl overflow-y-auto max-h-[95vh]">
             <div id="modal-title" class="font-black text-emerald-400 text-2xl uppercase mb-5 text-center">Hole Entry</div>
-            <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-3 rounded-xl border border-slate-600 bg-slate-700 text-[12px] font-black uppercase text-slate-300">Moose Knuckle</button></div>
+            <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-3 rounded-xl border border-slate-600 bg-slate-700 text-[11px] font-black uppercase text-slate-300">Moose Knuckle</button></div>
             <div class="space-y-4" id="modal-inputs-area"></div>
             <button onclick="closeModal()" class="w-full mt-8 bg-emerald-600 py-6 rounded-2xl font-black uppercase tracking-widest shadow-xl text-xl">Save Hole</button>
         </div>
@@ -90,7 +90,7 @@
     <div id="log-modal" class="modal">
         <div class="bg-slate-900 p-6 rounded-2xl w-full max-w-sm border border-slate-700 max-h-[80vh] flex flex-col">
             <h2 class="text-center font-black text-emerald-500 uppercase mb-4 tracking-tighter">Trash Log Breakdown</h2>
-            <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2"></div>
+            <div id="log-content" class="overflow-y-auto flex-grow mb-4 pr-2 text-xs"></div>
             <button onclick="document.getElementById('log-modal').style.display='none'" class="w-full bg-slate-700 py-4 rounded-2xl font-bold uppercase text-xs">Close</button>
         </div>
     </div>
@@ -226,24 +226,35 @@
             }
             document.getElementById('log-content').innerHTML = logH || 'No trash yet.';
             let totalMD = 0; const mList = document.getElementById('match-list'); mList.innerHTML = '';
-            let trailing = false;
+            let trailingMatch = false;
             activeBets.forEach(m => {
                 let d = 0;
                 for(let h=m.start; h<=m.end; h++) { let r = true, ns = []; for(let i=0; i<4; i++) { let d = holeData[h]?.[i]; if(!d || d.gross === '') { r = false; break; } ns[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); } if(r) { let aB = Math.min(ns[0], ns[1]), bB = Math.min(ns[2], ns[3]); if(aB < bB) d++; else if(bB < aB) d--; } }
-                totalMD += (d * roster.nassauVal); if(d !== 0) trailing = true;
+                totalMD += (d * roster.nassauVal);
+                if(d !== 0) trailingMatch = true;
                 let sT = d === 0 ? "AS" : (d > 0 ? `${roster.t1} +${d}` : `${roster.t2} +${Math.abs(d)}`);
                 mList.innerHTML += `<div class="flex justify-between items-center"><span class="font-bold text-[11px] uppercase text-slate-500">${m.name}</span><span class="font-mono text-emerald-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-[12px]">${sT}</span></div>`;
             });
             document.getElementById('t1-final').innerText = `${roster.t1}: $${t1_t + totalMD}`;
             document.getElementById('t2-final').innerText = `${roster.t2}: $${t2_t - totalMD}`;
-            document.getElementById('press-btn').classList.toggle('hidden', !trailing || activeHole >= 18);
+            document.getElementById('press-btn').classList.toggle('hidden', !trailingMatch || activeHole >= 18);
         }
 
         function openPressMenu() {
-            let next = activeHole + 1; if(next > 18) return;
-            let type = prompt(`PRESS ON HOLE ${next}:\n1: Single Match (Ends on 9 or 18)\n2: Double Stake (Press 9 AND Total 18)`);
-            if(type === '1') activeBets.push({ id: Date.now(), name: `P-Match H${next} (${next <= 9 ? 'F9' : 'B9'})`, start: next, end: next <= 9 ? 9 : 18 });
-            if(type === '2') { activeBets.push({ id: Date.now()+'a', name: `P-Match H${next} (F9)`, start: next, end: 9 }); if(next <= 9) activeBets.push({ id: Date.now()+'b', name: `P-Total H${next} (T18)`, start: next, end: 18 }); }
+            let suggested = activeHole + 1 > 18 ? 18 : activeHole + 1;
+            let startH = parseInt(prompt("Enter the STARTING HOLE for the press:", suggested));
+            if(isNaN(startH) || startH < 1 || startH > 18) return alert("Invalid hole.");
+            
+            let choice = prompt(`PRESS STARTING HOLE ${startH}:\n1: Single Match (Remainder of F9 or B9)\n2: Double Stake (Press 9 AND Total 18)\n3: Cancel`);
+            if(choice === '1') {
+                let endH = startH <= 9 ? 9 : 18;
+                let label = startH <= 9 ? 'F9' : 'B9';
+                activeBets.push({ id: Date.now(), name: `P-Match H${startH} (${label})`, start: startH, end: endH });
+            }
+            if(choice === '2') {
+                activeBets.push({ id: Date.now()+'a', name: `P-Match H${startH} (F9)`, start: startH, end: 9 });
+                if(startH <= 9) activeBets.push({ id: Date.now()+'b', name: `P-Total H${startH} (T18)`, start: startH, end: 18 });
+            }
             localStorage.setItem('golf_bets', JSON.stringify(activeBets)); pushToCloud(); buildTable();
         }
 
