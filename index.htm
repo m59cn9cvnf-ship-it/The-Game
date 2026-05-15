@@ -3,67 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE GAME: v8.1</title>
+    <title>THE GAME: v8.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; font-size: 16px; }
+        body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; font-size: 17px; }
         .card { background: #1e293b; border-radius: 16px; padding: 16px; border-bottom: 4px solid #334155; }
         .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
         table { border-collapse: collapse; width: 100%; white-space: nowrap; }
         th, td { border: 1px solid #334155; padding: 14px 12px; text-align: center; min-width: 65px; position: relative; }
-        .sticky-col { position: sticky; left: 0; background: #1e293b; z-index: 20; min-width: 125px; text-align: left; border-right: 3px solid #475569; font-size: 14px; }
-        .score-cell { height: 60px; background: #0f172a; font-weight: 900; font-size: 1.4rem; }
-        .stat-col { background: #1e293b; font-weight: 800; color: #10b981; min-width: 60px; font-size: 14px; }
-        .winner-highlight { background-color: rgba(16, 185, 129, 0.25) !important; color: #34d399 !important; }
-        .stroke-dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; background: #fbbf24; border-radius: 50%; }
-        .jp-badge { font-size: 8px; font-weight: 900; padding: 2px 5px; border-radius: 4px; background: #ef4444; color: white; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 10; }
+        .sticky-col { position: sticky; left: 0; background: #1e293b; z-index: 20; min-width: 130px; text-align: left; border-right: 3px solid #475569; font-size: 15px; font-weight: 800; }
+        .score-cell { height: 65px; background: #0f172a; font-weight: 900; font-size: 1.6rem; color: #f8fafc; }
+        .stat-col { background: #1e293b; font-weight: 900; color: #10b981; min-width: 60px; font-size: 15px; }
+        .winner-highlight { background-color: rgba(16, 185, 129, 0.3) !important; color: #34d399 !important; }
+        .stroke-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: #fbbf24; border-radius: 50%; }
+        .jp-badge { font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; background: #ef4444; color: white; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 10; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 100; align-items: center; justify-content: center; padding: 10px; }
-        .trash-btn { background: #334155; border: 1px solid #475569; border-radius: 6px; padding: 10px 4px; font-size: 9px; font-weight: 900; color: #cbd5e1; line-height: 1.2; }
+        .trash-btn { background: #334155; border: 1px solid #475569; border-radius: 8px; padding: 12px 4px; font-size: 10px; font-weight: 900; color: #cbd5e1; line-height: 1.2; }
         .trash-btn.active { background: #10b981; border-color: #34d399; color: white; }
         .trash-btn.active-red { background: #ef4444; border-color: #f87171; color: white; }
         input, select { background: #0f172a !important; color: white !important; border: 1px solid #334155 !important; }
-        #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 900; font-size: 14px; z-index: 200; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); pointer-events: none; }
+        #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 900; font-size: 14px; z-index: 200; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.2); pointer-events: none; }
     </style>
 </head>
 <body class="p-2">
 
-    <div id="toast">SAVED</div>
+    <div id="toast">SYNCED</div>
 
     <div id="app" class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-4 px-2">
             <h1 class="text-2xl font-black italic text-emerald-400 uppercase tracking-tighter">The Game</h1>
-            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-[10px] bg-slate-800 px-4 py-2 rounded-full border border-slate-700 uppercase font-bold text-emerald-400">Setup</button>
+            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="text-[11px] bg-slate-800 px-4 py-2 rounded-full border border-slate-700 uppercase font-bold text-emerald-400">Setup</button>
         </header>
 
-        <section id="setup" class="card mb-4">
+        <section id="setup" class="card mb-4 hidden">
             <div class="mb-6">
-                <h2 class="text-[10px] font-black text-blue-400 uppercase mb-2 tracking-widest italic">Live Sync Code</h2>
+                <h2 class="text-[11px] font-black text-blue-400 uppercase mb-2 tracking-widest italic">1. Group Sync Code</h2>
                 <input type="text" id="game-id-in" placeholder="E.G. LOGAN1" class="p-3 rounded-xl w-full text-sm font-mono uppercase">
             </div>
 
             <div class="mb-6">
-                <h2 class="text-[10px] font-black text-amber-400 uppercase mb-2 tracking-widest italic">Rosters & Indexes</h2>
+                <h2 class="text-[11px] font-black text-amber-400 uppercase mb-2 tracking-widest italic">2. Rosters & Indexes</h2>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <input type="text" id="t1-name-in" placeholder="Team A Name" class="p-2 rounded w-full text-[10px] font-bold">
+                    <div class="space-y-3">
+                        <input type="text" id="t1-name-in" placeholder="Team A Name" class="p-2 rounded w-full text-xs font-bold bg-slate-900 border border-emerald-500/20">
                         <div id="t1-players" class="space-y-3"></div>
                     </div>
-                    <div class="space-y-2">
-                        <input type="text" id="t2-name-in" placeholder="Team B Name" class="p-2 rounded w-full text-[10px] font-bold">
+                    <div class="space-y-3">
+                        <input type="text" id="t2-name-in" placeholder="Team B Name" class="p-2 rounded w-full text-xs font-bold bg-slate-900 border border-amber-500/20">
                         <div id="t2-players" class="space-y-3"></div>
                     </div>
                 </div>
             </div>
 
             <div class="mb-6">
-                <h2 class="text-[10px] font-black text-emerald-400 uppercase mb-2 tracking-widest italic">Course Selection</h2>
+                <h2 class="text-[11px] font-black text-emerald-400 uppercase mb-2 tracking-widest italic">3. Course</h2>
                 <select id="course-selector" onchange="loadSavedCourse(this.value)" class="w-full p-3 rounded-xl text-sm mb-3">
                     <option value="">-- Manual Entry / New Course --</option>
                 </select>
                 <div class="grid grid-cols-3 gap-2 mb-2">
-                    <input type="text" id="course-name" placeholder="Course Name" class="p-2 rounded text-xs col-span-3">
+                    <input type="text" id="course-name" placeholder="Course" class="p-2 rounded text-xs col-span-3">
                     <input type="number" id="course-rating" placeholder="Rate" class="p-2 rounded text-xs">
                     <input type="number" id="course-slope" placeholder="Slope" class="p-2 rounded text-xs">
                     <input type="number" id="course-par" placeholder="Par" class="p-2 rounded text-xs">
@@ -73,19 +73,19 @@
             </div>
 
             <div class="mb-6 border-t border-slate-700 pt-4">
-                <label class="text-[10px] font-bold text-slate-500 uppercase">Nassau Value ($ per point)</label>
+                <label class="text-[11px] font-bold text-slate-500 uppercase">Nassau Value ($)</label>
                 <input type="number" id="nassau-val-in" class="p-3 rounded-xl w-full text-sm mt-1" placeholder="5">
             </div>
 
-            <button onclick="saveEverything()" class="w-full bg-emerald-600 py-5 rounded-2xl font-black uppercase text-sm shadow-xl tracking-widest mb-3">Start & Sync Round</button>
-            <button onclick="clearAllData()" class="w-full bg-red-900/20 text-red-500 py-2 rounded-xl text-[9px] uppercase font-bold border border-red-900/20">Wipe Data & Reset</button>
+            <button onclick="saveEverything()" class="w-full bg-emerald-600 py-5 rounded-2xl font-black uppercase text-sm shadow-xl tracking-widest mb-3">Start & Sync Cloud</button>
+            <button onclick="clearAllData()" class="w-full bg-red-900/20 text-red-500 py-2 rounded-xl text-[10px] uppercase font-bold border border-red-900/20">Full Reset</button>
         </section>
 
         <div class="table-container mb-4 shadow-2xl">
             <table id="main-scorecard">
                 <thead>
-                    <tr id="header-row" class="bg-slate-800 text-slate-400 text-[12px]"><th class="sticky-col">HOLE</th></tr>
-                    <tr id="par-row" class="bg-slate-900 text-slate-500 text-[10px]"><th class="sticky-col">PAR/HCP</th></tr>
+                    <tr id="header-row" class="bg-slate-800 text-slate-400 text-[13px]"><th class="sticky-col">HOLE</th></tr>
+                    <tr id="par-row" class="bg-slate-900 text-slate-500 text-[11px]"><th class="sticky-col">PAR/HCP</th></tr>
                 </thead>
                 <tbody id="player-rows"></tbody>
             </table>
@@ -93,14 +93,14 @@
 
         <div class="card bg-slate-950 border-emerald-500/40 sticky bottom-2 shadow-2xl">
             <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
-                <div class="text-[11px] font-black text-emerald-500 uppercase tracking-widest italic">Live Ledger</div>
+                <div class="text-[12px] font-black text-emerald-500 uppercase tracking-widest italic">Live Nassau Ledger</div>
                 <div class="flex gap-2">
-                    <button onclick="document.getElementById('log-modal').style.display='flex'" class="bg-slate-800 px-3 py-2 rounded-lg text-[10px] font-bold uppercase border border-slate-700">Trash Log</button>
-                    <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow-lg">Press</button>
+                    <button onclick="document.getElementById('log-modal').style.display='flex'" class="bg-slate-800 px-3 py-2 rounded-lg text-[11px] font-bold uppercase border border-slate-700">Trash Log</button>
+                    <button id="press-btn" onclick="openPressMenu()" class="hidden bg-red-600 px-4 py-2 rounded-lg text-[11px] font-black uppercase shadow-lg">Press</button>
                 </div>
             </div>
             <div id="match-list" class="space-y-1.5 mb-3 text-xs"></div>
-            <div class="grid grid-cols-2 gap-4 text-[20px] font-black border-t border-slate-800 pt-2 uppercase italic">
+            <div class="grid grid-cols-2 gap-4 text-[22px] font-black border-t border-slate-800 pt-2 uppercase italic">
                 <div id="t1-final" class="text-emerald-400">T1: $0</div>
                 <div id="t2-final" class="text-amber-400 text-right">T2: $0</div>
             </div>
@@ -109,10 +109,10 @@
 
     <div id="score-modal" class="modal">
         <div class="bg-slate-800 p-5 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl overflow-y-auto max-h-[95vh]">
-            <div id="modal-title" class="font-black text-emerald-400 text-xl uppercase mb-5 text-center">Hole Entry</div>
-            <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-3 rounded-xl border border-slate-600 bg-slate-700 text-[11px] font-black uppercase text-slate-300">Moose Knuckle Trigger</button></div>
+            <div id="modal-title" class="font-black text-emerald-400 text-2xl uppercase mb-5 text-center">Hole Entry</div>
+            <div id="mk-container" class="hidden mb-4"><button id="mk-btn" onclick="triggerMK()" class="w-full py-4 rounded-xl border border-slate-600 bg-slate-700 text-[12px] font-black uppercase text-slate-300">Moose Knuckle</button></div>
             <div class="space-y-4" id="modal-inputs-area"></div>
-            <button onclick="closeModal()" class="w-full mt-8 bg-emerald-600 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl text-lg">Save Hole</button>
+            <button onclick="closeModal()" class="w-full mt-8 bg-emerald-600 py-6 rounded-2xl font-black uppercase tracking-widest shadow-xl text-xl">Save Hole</button>
         </div>
     </div>
 
@@ -132,13 +132,12 @@
         let course = JSON.parse(localStorage.getItem('golf_course')) || { name: "New Course", rating: 70.1, slope: 121, par: 71, pars: [4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4], hcp: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18] };
         let roster = JSON.parse(localStorage.getItem('golf_roster')) || { t1: "T1", t2: "T2", players: [], nassauVal: 5, gameID: "" };
         let courseDir = JSON.parse(localStorage.getItem('golf_course_dir')) || [];
-        let playerDir = JSON.parse(localStorage.getItem('golf_player_dir')) || [];
         let holeData = JSON.parse(localStorage.getItem('golf_holedata')) || {}; 
         let mk_results = JSON.parse(localStorage.getItem('golf_mk')) || {}; 
         let activeBets = JSON.parse(localStorage.getItem('golf_bets')) || [
-            { id: 'f9', name: 'Front 9', start: 1, end: 9, type: 'f9' },
-            { id: 'b9', name: 'Back 9', start: 10, end: 18, type: 'b9' },
-            { id: '18', name: 'Total 18', start: 1, end: 18, type: '18' }
+            { id: 'f9', name: 'Front 9', start: 1, end: 9 },
+            { id: 'b9', name: 'Back 9', start: 10, end: 18 },
+            { id: '18', name: 'Total 18', start: 1, end: 18 }
         ];
         let activeHole = 1;
         let currentModalState = {};
@@ -152,7 +151,7 @@
             document.getElementById('game-id-in').value = roster.gameID || "";
             document.getElementById('nassau-val-in').value = roster.nassauVal || "";
             
-            // Populate Inputs
+            // Populate Course
             document.getElementById('course-name').value = course.name;
             document.getElementById('course-rating').value = course.rating;
             document.getElementById('course-slope').value = course.slope;
@@ -167,11 +166,20 @@
                 const target = i < 2 ? t1Div : t2Div;
                 target.innerHTML += `
                 <div class="space-y-1">
-                    <input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="Player ${i+1}" class="p-2 rounded w-full text-xs">
-                    <input type="number" step="0.1" id="p-i-${i}" value="${roster.players?.[i]?.idx ?? ''}" placeholder="Index" class="p-2 rounded w-full text-xs">
+                    <input type="text" id="p-n-${i}" value="${roster.players?.[i]?.name || ''}" placeholder="Player ${i+1}" class="p-2 rounded w-full text-sm bg-slate-900 border border-slate-700">
+                    <input type="number" step="0.1" id="p-i-${i}" value="${roster.players?.[i]?.idx ?? ''}" placeholder="Index" class="p-2 rounded w-full text-sm bg-slate-900 border border-slate-700">
                 </div>`;
             }
 
+            // INSTANT TABLE RENDER
+            if(roster.players?.length > 0) {
+                buildTable();
+                document.getElementById('setup').classList.add('hidden');
+            } else {
+                document.getElementById('setup').classList.remove('hidden');
+            }
+
+            // SYNC FIREBASE
             if(roster.gameID) {
                 db.ref('games/' + roster.gameID).on('value', (snap) => {
                     const data = snap.val();
@@ -180,8 +188,7 @@
                         buildTable();
                     }
                 });
-            } else if(roster.players?.length > 0) buildTable();
-            else document.getElementById('setup').classList.remove('hidden');
+            }
         }
 
         function loadSavedCourse(name) {
@@ -207,13 +214,13 @@
                 hcp: document.getElementById('course-hcp-list').value.split(',').map(Number)
             };
             if(!courseDir.find(x => x.name === newCourse.name)) { courseDir.push(newCourse); localStorage.setItem('golf_course_dir', JSON.stringify(courseDir)); }
-            localStorage.setItem('golf_course', JSON.stringify(newCourse)); course = newCourse;
+            localStorage.setItem('golf_course', JSON.stringify(newCourse));
 
             roster = { t1: document.getElementById('t1-name-in').value || "T1", t2: document.getElementById('t2-name-in').value || "T2", nassauVal: parseFloat(document.getElementById('nassau-val-in').value) || 0, gameID: gid, players: [] };
             for(let i=0; i<4; i++) {
                 let n = document.getElementById(`p-n-${i}`).value || `P${i+1}`;
                 let idx = parseFloat(document.getElementById(`p-i-${i}`).value) || 0;
-                let ch = Math.round((idx * (course.slope / 113)) + (course.rating - course.par));
+                let ch = Math.round((idx * (newCourse.slope / 113)) + (newCourse.rating - newCourse.par));
                 roster.players.push({ name: n, idx, ch });
             }
             localStorage.setItem('golf_roster', JSON.stringify(roster));
@@ -223,23 +230,28 @@
         }
 
         function pushToCloud() { if(roster.gameID) db.ref('games/' + roster.gameID).set({ holeData, activeBets, mk_results, roster, course }); }
-        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display='none', 2000); }
+        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display='none', 1500); }
 
         function buildTable() {
             const hRow = document.getElementById('header-row'); const pRow = document.getElementById('par-row');
-            hRow.innerHTML = '<th class="sticky-col">HOLE</th>'; pRow.innerHTML = '<th class="sticky-col text-[9px]">PAR/HCP</th>';
+            hRow.innerHTML = '<th class="sticky-col">HOLE</th>'; pRow.innerHTML = '<th class="sticky-col text-[10px]">PAR/HCP</th>';
             for(let i=1; i<=18; i++) { hRow.innerHTML += `<th id="h-head-${i}">${i}<div id="badge-${i}"></div></th>`; pRow.innerHTML += `<td id="p-head-${i}">${course.pars[i-1]}<br><span class="opacity-30">${course.hcp[i-1]}</span></td>`; }
             hRow.innerHTML += `<th class="stat-col">TOT</th><th class="stat-col">+/-</th>`; pRow.innerHTML += `<td class="stat-col"></td><td class="stat-col"></td>`;
+            
             const tbody = document.getElementById('player-rows'); tbody.innerHTML = '';
             let winners = {};
             for(let h=1; h<=18; h++) {
                 let ns = []; let f = true;
-                for(let i=0; i<4; i++) { let d = holeData[h]?.[i]; if(!d || d.gross === '') { f = false; break; } ns[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
+                for(let i=0; i<4; i++) { 
+                    let d = holeData[h]?.[i]; if(!d || d.gross === '') { f = false; break; } 
+                    ns[i] = parseInt(d.gross) - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); 
+                }
                 if(f) { let m = Math.min(...ns); winners[h] = ns.map((v, ix) => v === m ? ix : -1).filter(v => v > -1); }
             }
+
             roster.players.forEach((p, pIdx) => {
                 let tG = 0, tP = 0;
-                let row = `<tr><td class="sticky-col"><div class="text-[9px] font-black text-emerald-500 uppercase">${pIdx < 2 ? roster.t1 : roster.t2}</div><div class="font-black text-[15px]">${p.name}</div></td>`;
+                let row = `<tr><td class="sticky-col"><div class="text-[10px] font-black text-emerald-500 uppercase">${pIdx < 2 ? roster.t1 : roster.t2}</div><div class="font-black text-[17px]">${p.name}</div></td>`;
                 for(let h=1; h<=18; h++) {
                     const d = holeData[h]?.[pIdx] || {}; const s = d.gross || ''; if(s !== '') { tG += parseInt(s); tP += course.pars[h-1]; }
                     let isp = activeBets.some(b => b.start === h && !['f9','b9','18'].includes(b.id));
@@ -263,8 +275,8 @@
                 area.innerHTML += `
                     <div class="bg-slate-900/50 p-4 rounded-3xl border border-slate-700/50">
                         <div class="flex justify-between items-center mb-3">
-                            <label class="font-black uppercase text-slate-400 text-sm">${p.name}</label>
-                            <input type="number" id="mod-gross-${i}" inputmode="numeric" value="${ex.gross}" class="bg-slate-800 border-2 border-emerald-500/50 p-2 rounded-xl w-20 text-center font-black text-2xl text-emerald-400" oninput="currentModalState[${i}].gross = this.value; if(this.value.length >= 1 && ${i < 3}) document.getElementById('mod-gross-${i+1}').focus()">
+                            <label class="font-black uppercase text-slate-400 text-base">${p.name}</label>
+                            <input type="number" id="mod-gross-${i}" inputmode="numeric" value="${ex.gross}" class="bg-slate-800 border-2 border-emerald-500/50 p-3 rounded-xl w-24 text-center font-black text-3xl text-emerald-400" oninput="currentModalState[${i}].gross = this.value; if(this.value.length >= 1 && ${i < 3}) document.getElementById('mod-gross-${i+1}').focus()">
                         </div>
                         <div class="grid grid-cols-4 gap-2">
                             <button onclick="tapT(this, ${i}, 'sandie')" class="trash-btn ${ex.sandie ? 'active' : ''}">SANDIE</button>
@@ -277,6 +289,7 @@
                     </div>`;
             });
             document.getElementById('score-modal').style.display = 'flex';
+            document.getElementById('mod-gross-0').focus();
         }
 
         function tapT(btn, pI, ty, isR = false) { currentModalState[pI][ty] = !currentModalState[pI][ty]; btn.classList.toggle('active', currentModalState[pI][ty] && !isR); btn.classList.toggle('active-red', currentModalState[pI][ty] && isR); showToast("UPDATED"); }
@@ -285,39 +298,37 @@
 
         function calculateEverything() {
             let t1_t = 0, t2_t = 0, logH = '', jpP = 0, tStr = [0, 0];
-            function log(h, l, a, tI) { logH = `<div class="log-row"><span>H${h} - ${l}</span><span class="${tI < 2 ? 'text-emerald-400':'text-amber-400'}">+$${a}</span></div>` + logH; tI < 2 ? t1_t += a : t2_t += a; }
             for(let i=1; i<=18; i++) { if(document.getElementById(`badge-${i}`)) document.getElementById(`badge-${i}`).innerHTML = ''; }
             for(let h=1; h<=18; h++) {
                 let r = true, gS = [], nS = [], par = course.pars[h-1];
                 for(let i=0; i<4; i++) { let d = holeData[h]?.[i] || {}; if(d.gross === '' || d.gross === undefined) { r = false; break; } gS[i] = parseInt(d.gross); nS[i] = gS[i] - (roster.players[i].ch >= course.hcp[h-1] ? 1 : 0); }
-                if(mk_results[h]) { if(mk_results[h] === '1') log(h, "Moose Birdie", 5, 0); if(mk_results[h] === '2') log(h, "Moose Par", 2, 0); if(mk_results[h] === '3') log(h, "Moose Challenger", 1, 2); }
+                if(mk_results[h]) { if(mk_results[h] === '1') t1_t += 5; if(mk_results[h] === '2') t1_t += 2; if(mk_results[h] === '3') t2_t += 1; }
                 if(r) {
                     let t1H = false, t2H = false, t1BC = 0, t2BC = 0;
                     for(let i=0; i<4; i++) {
                         let d = holeData[h][i];
-                        if(gS[i] === par - 1 && !mk_results[h]) { log(h, `${roster.players[i].name} Birdie`, 1, i); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
-                        if(gS[i] <= par - 2) { log(h, `${roster.players[i].name} Eagle`, 10, i); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
-                        if(d.sandie) { log(h, `${roster.players[i].name} Sandie`, 1, i); if(i<2) t1H=true; else t2H=true; }
-                        if(d.jSingle) log(h, `${roster.players[i].name} Jones Birdie`, 3, i);
-                        if(d.jDouble) log(h, `${roster.players[i].name} Jones Eagle`, 5, i);
-                        if(d.j3P) log(h, `${roster.players[i].name} Jones 3P`, 1, i < 2 ? 2 : 0);
-                        if(d.jReversie) log(h, `${roster.players[i].name} Jones E Reversie`, 5, i < 2 ? 2 : 0);
-                        if(d.greenie) { log(h, `${roster.players[i].name} Greenie`, 1, i); if(i<2) t1H=true; else t2H=true; }
-                        if(d.reversie) { log(h, `${roster.players[i].name} Reversie`, 1, i < 2 ? 2 : 0); if(i<2) t2H=true; else t1H=true; }
+                        if(gS[i] === par - 1 && !mk_results[h]) { t1_t += (i<2?1:0); t2_t += (i>=2?1:0); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
+                        if(gS[i] <= par - 2) { t1_t += (i<2?10:0); t2_t += (i>=2?10:0); if(i<2) {t1H=true; t1BC++;} else {t2H=true; t2BC++;} }
+                        if(d.sandie) { t1_t += (i<2?1:0); t2_t += (i>=2?1:0); if(i<2) t1H=true; else t2H=true; }
+                        if(d.jSingle) { t1_t += (i<2?3:0); t2_t += (i>=2?3:0); }
+                        if(d.jDouble) { t1_t += (i<2?5:0); t2_t += (i>=2?5:0); }
+                        if(d.j3P) { if(i<2) t2_t += 1; else t1_t += 1; }
+                        if(d.jReversie) { if(i<2) t2_t += 5; else t1_t += 5; }
+                        if(d.greenie) { t1_t += (i<2?1:0); t2_t += (i>=2?1:0); if(i<2) t1H=true; else t2H=true; }
+                        if(d.reversie) { if(i<2) { t2_t += 1; t2H=true; } else { t1_t += 1; t1H=true; } }
                     }
-                    if(t1BC === 2 && !mk_results[h]) log(h, `${roster.t1} DOUBLE DOUG`, 8, 0);
-                    if(t2BC === 2 && !mk_results[h]) log(h, `${roster.t2} DOUBLE DOUG`, 8, 2);
-                    if(t1H) tStr[0]++; else tStr[0] = 0; if(tStr[0] === 3) { log(h, `TURKEY: ${roster.t1}`, 5, 0); tStr[0] = 0; }
-                    if(t2H) tStr[1]++; else tStr[1] = 0; if(tStr[1] === 3) { log(h, `TURKEY: ${roster.t2}`, 5, 2); tStr[1] = 0; }
+                    if(t1BC === 2 && !mk_results[h]) t1_t += 8;
+                    if(t2BC === 2 && !mk_results[h]) t2_t += 8;
+                    if(t1H) tStr[0]++; else tStr[0] = 0; if(tStr[0] === 3) { t1_t += 5; tStr[0] = 0; }
+                    if(t2H) tStr[1]++; else tStr[1] = 0; if(tStr[1] === 3) { t2_t += 5; tStr[1] = 0; }
                     let same = gS.every(v => v === gS[0]), bP = gS.every(v => v >= par + 1), dP = gS.every(v => v >= par + 2), hJP = 0;
                     if(same) hJP += 2; if(dP) hJP += 10; else if(bP) hJP += 5; jpP += hJP;
                     let t1N = Math.min(nS[0], nS[1]), t2N = Math.min(nS[2], nS[3]);
-                    if(t1N < t2N && jpP > 0) { log(h, `${roster.t1} WIN POT`, jpP, 0); jpP = 0; }
-                    else if(t2N < t1N && jpP > 0) { log(h, `${roster.t2} WIN POT`, jpP, 2); jpP = 0; }
+                    if(t1N < t2N && jpP > 0) { t1_t += jpP; jpP = 0; }
+                    else if(t2N < t1N && jpP > 0) { t2_t += jpP; jpP = 0; }
                     else if(jpP > 0 && h < 18) { let bT = dP ? "PF" : (bP ? "JF" : "JP"); document.getElementById(`badge-${h+1}`).innerHTML = `<div class="jp-badge">${bT} $${jpP}</div>`; }
                 }
             }
-            document.getElementById('log-content').innerHTML = logH || 'No trash yet.';
             let totalMD = 0; const mList = document.getElementById('match-list'); mList.innerHTML = '';
             activeBets.forEach(m => {
                 let d = 0;
@@ -328,7 +339,7 @@
                 }
                 totalMD += (d * roster.nassauVal);
                 let sT = d === 0 ? "AS" : (d > 0 ? `${roster.t1} +${d}` : `${roster.t2} +${Math.abs(d)}`);
-                mList.innerHTML += `<div class="flex justify-between items-center"><span class="font-bold text-[10px] uppercase text-slate-500">${m.name}</span><span class="font-mono text-emerald-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-[11px]">${sT}</span></div>`;
+                mList.innerHTML += `<div class="flex justify-between items-center"><span class="font-bold text-[11px] uppercase text-slate-500">${m.name}</span><span class="font-mono text-emerald-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-[12px]">${sT}</span></div>`;
             });
             document.getElementById('t1-final').innerText = `${roster.t1}: $${t1_t + totalMD}`;
             document.getElementById('t2-final').innerText = `${roster.t2}: $${t2_t - totalMD}`;
@@ -346,7 +357,7 @@
             localStorage.setItem('golf_bets', JSON.stringify(activeBets)); pushToCloud(); buildTable();
         }
 
-        function clearAllData() { if(confirm("Start fresh?")) { localStorage.clear(); location.reload(); } }
+        function clearAllData() { if(confirm("Full Reset? This wipes everything!")) { localStorage.clear(); location.reload(); } }
         window.onload = init;
     </script>
 </body>
